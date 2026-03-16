@@ -1,25 +1,19 @@
-/* ─── Chubbo Font Face ─────────────────────────────────────────────────────── */
+/* ─── Pilowlava — wordmark/hero only ──────────────────────────────────────── */
 
 @font-face {
-  font-family: 'Chubbo';
-  src: url('/fonts/Chubbo-Variable.woff2') format('woff2');
-  font-weight: 100 900;
-  font-style: normal;
-  font-display: swap;
-}
-
-@font-face {
-  font-family: 'Chubbo';
-  src: url('/fonts/Chubbo-Bold.woff2') format('woff2');
-  font-weight: 700;
-  font-style: normal;
-  font-display: swap;
-}
-
-@font-face {
-  font-family: 'Chubbo';
-  src: url('/fonts/Chubbo-Regular.woff2') format('woff2');
+  font-family: 'Pilowlava';
+  src: url('/fonts/Pilowlava-Regular.woff2') format('woff2');
   font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+/* ─── Cabinet Grotesk — display + UI ──────────────────────────────────────── */
+
+@font-face {
+  font-family: 'Cabinet Grotesk';
+  src: url('/fonts/CabinetGrotesk-Variable.woff2') format('woff2');
+  font-weight: 100 900;
   font-style: normal;
   font-display: swap;
 }
@@ -48,7 +42,8 @@
   --radius: 20px;
 
   /* Font stacks */
-  --font-display: 'Chubbo', system-ui, sans-serif;
+  --font-display: 'Cabinet Grotesk', system-ui, sans-serif;
+  --font-wordmark: 'Pilowlava', 'Cabinet Grotesk', system-ui, sans-serif;
   --font-body: system-ui, -apple-system, 'Segoe UI', sans-serif;
 }
 

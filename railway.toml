@@ -3,6 +3,7 @@ builder = "nixpacks"
 buildCommand = "pnpm build"
 
 [deploy]
+releaseCommand = "pnpm drizzle-kit migrate"
 startCommand = "pnpm start"
 healthcheckPath = "/health"
 healthcheckTimeout = 60
