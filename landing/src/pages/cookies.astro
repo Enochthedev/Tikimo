@@ -1,0 +1,62 @@
+---
+import Legal from '@/layouts/Legal.astro'
+---
+
+<Legal
+  title="Cookie Policy"
+  description="Tiximo uses minimal cookies. Here's exactly what and why."
+  lastUpdated="March 2026"
+>
+  <section>
+    <h2>Overview</h2>
+    <p>Tiximo uses minimal cookies. We do not use advertising cookies or third-party tracking.</p>
+  </section>
+
+  <section>
+    <h2>Essential cookies</h2>
+    <table>
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Purpose</th>
+          <th>Duration</th>
+          <th>Can you opt out?</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><code>tiximo_session</code></td>
+          <td>Maintains your map session on the landing page</td>
+          <td>Session only — deleted when you close the browser</td>
+          <td>No — required for the map to work</td>
+        </tr>
+      </tbody>
+    </table>
+  </section>
+
+  <section>
+    <h2>Analytics</h2>
+    <p>We do not use Google Analytics or any third-party tracking cookies.</p>
+  </section>
+
+  <section>
+    <h2>Third-party platforms</h2>
+    <p>When you click through to Ticketmaster, Eventbrite, or any other ticketing platform, their cookie policies apply independently of ours.</p>
+  </section>
+
+  <section>
+    <h2>Questions</h2>
+    <p>Email <a href="mailto:privacy@tiximo.app">privacy@tiximo.app</a></p>
+  </section>
+</Legal>
+
+<style>
+  code {
+    font-family: ui-monospace, monospace;
+    font-size: 13px;
+    background: var(--surface);
+    padding: 2px 6px;
+    border-radius: 4px;
+    color: var(--warm);
+  }
+</style>

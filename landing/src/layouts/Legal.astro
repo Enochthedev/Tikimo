@@ -1,0 +1,227 @@
+---
+import Base from './Base.astro'
+
+export interface Props {
+  title: string
+  description?: string
+  lastUpdated?: string
+}
+
+const { title, description, lastUpdated } = Astro.props
+---
+
+<Base title={`${title} — Tiximo`} description={description}>
+  <header class="legal-nav">
+    <div class="container">
+      <a href="/" class="back-link">
+        <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+          <path d="M10 12L6 8l4-4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+        Back
+      </a>
+      <a href="/" class="nav-logo">Tiximo</a>
+    </div>
+  </header>
+
+  <main class="legal-main">
+    <div class="container">
+      <div class="legal-header">
+        <h1 class="legal-title">{title}</h1>
+        {lastUpdated && <p class="legal-date">Last updated: {lastUpdated}</p>}
+      </div>
+      <div class="legal-body">
+        <slot />
+      </div>
+    </div>
+  </main>
+
+  <footer class="legal-footer">
+    <div class="container">
+      <nav class="footer-links">
+        <a href="/privacy">Privacy</a>
+        <a href="/terms">Terms</a>
+        <a href="/disclaimer">Disclaimer</a>
+        <a href="/cookies">Cookies</a>
+      </nav>
+      <p class="footer-copy">&copy; 2026 Tiximo.</p>
+    </div>
+  </footer>
+</Base>
+
+<style>
+  /* ── Nav ── */
+  .legal-nav {
+    border-bottom: 1px solid var(--border);
+    padding: 20px 0;
+  }
+
+  .legal-nav .container {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+  }
+
+  .back-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 13px;
+    color: var(--dim);
+    text-decoration: none;
+    transition: color 0.2s;
+  }
+
+  .back-link:hover { color: var(--text); }
+
+  .nav-logo {
+    font-family: var(--font-display);
+    font-size: 18px;
+    font-weight: 600;
+    color: var(--text);
+    text-decoration: none;
+    letter-spacing: -0.5px;
+  }
+
+  /* ── Main ── */
+  .legal-main {
+    padding: 72px 0 96px;
+  }
+
+  .legal-header {
+    margin-bottom: 48px;
+    padding-bottom: 32px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .legal-title {
+    font-family: var(--font-display);
+    font-size: clamp(28px, 4vw, 44px);
+    font-weight: 600;
+    letter-spacing: -1px;
+    color: var(--text);
+    line-height: 1.1;
+  }
+
+  .legal-date {
+    margin-top: 12px;
+    font-size: 13px;
+    color: var(--dim);
+  }
+
+  /* ── Body prose ── */
+  .legal-body {
+    max-width: 680px;
+    display: flex;
+    flex-direction: column;
+    gap: 32px;
+  }
+
+  .legal-body :global(h2) {
+    font-family: var(--font-heading);
+    font-size: 18px;
+    font-weight: 700;
+    letter-spacing: -0.3px;
+    color: var(--text);
+    margin-bottom: 12px;
+  }
+
+  .legal-body :global(p) {
+    font-size: 15px;
+    line-height: 1.75;
+    color: var(--dim);
+  }
+
+  .legal-body :global(ul) {
+    list-style: none;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .legal-body :global(ul li) {
+    font-size: 15px;
+    line-height: 1.7;
+    color: var(--dim);
+    padding-left: 20px;
+    position: relative;
+  }
+
+  .legal-body :global(ul li::before) {
+    content: '–';
+    position: absolute;
+    left: 0;
+    color: var(--accent);
+  }
+
+  .legal-body :global(a) {
+    color: var(--warm);
+    text-decoration: underline;
+    text-underline-offset: 3px;
+  }
+
+  .legal-body :global(a:hover) {
+    color: var(--text);
+  }
+
+  .legal-body :global(section) {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .legal-body :global(table) {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 14px;
+  }
+
+  .legal-body :global(th) {
+    text-align: left;
+    font-weight: 600;
+    color: var(--text);
+    padding: 10px 14px;
+    border-bottom: 1px solid var(--border);
+    font-family: var(--font-heading);
+  }
+
+  .legal-body :global(td) {
+    padding: 10px 14px;
+    color: var(--dim);
+    border-bottom: 1px solid var(--border);
+    vertical-align: top;
+  }
+
+  .legal-body :global(tr:last-child td) {
+    border-bottom: none;
+  }
+
+  /* ── Footer ── */
+  .legal-footer {
+    border-top: 1px solid var(--border);
+    padding: 32px 0;
+    text-align: center;
+  }
+
+  .footer-links {
+    display: flex;
+    gap: 24px;
+    justify-content: center;
+    flex-wrap: wrap;
+    margin-bottom: 16px;
+  }
+
+  .footer-links a {
+    font-size: 13px;
+    color: var(--dim);
+    text-decoration: none;
+    transition: color 0.2s;
+  }
+
+  .footer-links a:hover { color: var(--text); }
+
+  .footer-copy {
+    font-size: 12px;
+    color: var(--dim);
+    opacity: 0.5;
+  }
+</style>
