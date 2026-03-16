@@ -9,7 +9,18 @@ import type { InboundMessage } from '../types/message.js'
 import type { NormalisedEvent, OutboundResponse } from '../types/response.js'
 import type { User } from '../types/user.js'
 
-export async function handleDiscovery(msg: InboundMessage, user: User): Promise<OutboundResponse> {
+interface DiscoveryOptions {
+  cityLabel?: string
+  category?: string
+}
+
+const RADIUS_STEPS = [10, 25, 50]
+
+export async function handleDiscovery(
+  msg: InboundMessage,
+  user: Pick<User, 'id' | 'radiusKm'> & { lastLat?: number; lastLng?: number },
+  options?: DiscoveryOptions,
+): Promise<OutboundResponse> {
   const lat = msg.location?.lat ?? user.lastLat
   const lng = msg.location?.lng ?? user.lastLng
 
@@ -21,36 +32,49 @@ export async function handleDiscovery(msg: InboundMessage, user: User): Promise<
     }
   }
 
-  // Update stored location if fresh
-  if (msg.location) {
+  // Update stored location if fresh GPS
+  if (msg.location && !options?.cityLabel) {
     const geoCell = latLngToCell(lat, lng)
     await updateUserLocation(user.id, lat, lng, geoCell)
   }
 
-  const { events, geoCell, fromCache } = await getEvents({
-    lat,
-    lng,
-    radiusKm: user.radiusKm,
-  })
+  // Try with user's preferred radius first, then widen
+  const radii = buildRadiusSteps(user.radiusKm)
+  let events: NormalisedEvent[] = []
+  let geoCell = ''
+  let fromCache = false
+  let usedRadius = user.radiusKm
 
-  logger.info({ count: events.length, geoCell, fromCache }, 'events fetched')
+  for (const radius of radii) {
+    const result = await getEvents({ lat, lng, radiusKm: radius, category: options?.category })
+    events = result.events
+    geoCell = result.geoCell
+    fromCache = result.fromCache
+    usedRadius = radius
+
+    if (events.length > 0) break
+  }
+
+  logger.info({ count: events.length, geoCell, fromCache, usedRadius }, 'events fetched')
 
   if (events.length === 0) {
     await recordZeroResults(geoCell)
+    const locationHint = options?.cityLabel ?? 'nearby'
     return {
       type: 'message',
-      text: "I looked. Nothing on nearby right now. Check back later — something usually comes up.",
+      text: `I searched far and wide ${locationHint !== 'nearby' ? `in ${locationHint}` : locationHint} — nothing on right now. Try again later or search another city like "events in London".`,
     }
   }
 
-  // Attach AI summaries (from card cache or generate)
   const enriched = await enrichEvents(events, msg.platform)
-
   await recordViewed(user.id, enriched, geoCell)
+
+  const locationLabel = options?.cityLabel ?? 'near you'
+  const radiusNote = usedRadius > user.radiusKm ? ` (searched ${usedRadius}km out)` : ''
 
   return {
     type: 'event_list',
-    text: `Found ${enriched.length} things near you. Here's what's good:`,
+    text: `Found ${enriched.length} things ${locationLabel}${radiusNote}. Here's what's good:`,
     events: enriched,
     actions: enriched.slice(0, 5).map((e) => ({
       label: `🎟 ${e.name.slice(0, 30)}`,
@@ -58,6 +82,16 @@ export async function handleDiscovery(msg: InboundMessage, user: User): Promise<
       payload: e.id,
     })),
   }
+}
+
+function buildRadiusSteps(userRadius: number): number[] {
+  const steps = [userRadius]
+  for (const step of RADIUS_STEPS) {
+    if (step > userRadius && !steps.includes(step)) {
+      steps.push(step)
+    }
+  }
+  return steps
 }
 
 async function enrichEvents(

@@ -3,8 +3,9 @@ import { env } from '@/config/env.js'
 import { TIXIMO_SYSTEM_PROMPT } from './personality.js'
 
 const MODELS = {
-  fast: 'anthropic/claude-3-haiku',
-  smart: 'anthropic/claude-3-sonnet',
+  fast: 'anthropic/claude-haiku-4-5',
+  smart: 'anthropic/claude-sonnet-4-6',
+  cheap: 'google/gemini-2.0-flash',
 } as const
 
 export type ModelTask = keyof typeof MODELS
