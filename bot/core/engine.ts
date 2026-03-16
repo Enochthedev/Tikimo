@@ -1,8 +1,11 @@
 import { findOrCreateUser, updateUserLocation } from '../db/queries.js'
 import { latLngToCell } from '../services/events/aggregator.js'
 import { complete } from '../services/ai/client.js'
+import { formatEventCard } from '../services/ai/formatter.js'
+import { getCachedCard, setCachedCard } from '../services/cache/cardCache.js'
 import { forwardGeocode, reverseGeocode, getAmbiguousCityOptions } from '../services/location/geocoder.js'
 import { getContext, updateContext } from '../services/cache/contextCache.js'
+import type { ConversationContext } from '../services/cache/contextCache.js'
 import { logger } from '../utils/logger.js'
 import { isEnabled } from './flags.js'
 import { handleBooking } from './flows/booking.js'
@@ -14,6 +17,7 @@ import { handleMapRequest } from './flows/map.js'
 import { handleOnboarding, needsOnboarding } from './flows/onboarding.js'
 import { parseIntent } from './intent.js'
 import { writeIntentConfirmation } from '../services/warehouse/writer.js'
+import { updateTaste } from '../services/ranking/tasteModel.js'
 import type { InboundMessage } from './types/message.js'
 import type { OutboundResponse } from './types/response.js'
 
@@ -65,10 +69,17 @@ export async function processMessage(msg: InboundMessage): Promise<OutboundRespo
   // Action routing (inline keyboard callbacks)
   if (msg.type === 'action') {
     const { id } = msg.action ?? { id: '' }
+    if (id === 'event_detail') {
+      const event = ctx?.lastEvents?.find((e) => e.id === msg.action!.payload)
+      if (event?.category) updateTaste(user.id, event.category, 'detail').catch(() => {})
+      return handleEventDetail(msg, msg.action!.payload, ctx)
+    }
     if (id === 'book_event') {
       if (ctx?.lastIntentId) {
         writeIntentConfirmation({ intent_id: ctx.lastIntentId, signal: 'booked', ts: new Date() })
       }
+      const event = ctx?.lastEvents?.find((e) => e.id === msg.action!.payload)
+      if (event?.category) updateTaste(user.id, event.category, 'booked').catch(() => {})
       return handleBooking(msg, user)
     }
     if (id === 'feeling_lucky') {
@@ -79,6 +90,8 @@ export async function processMessage(msg: InboundMessage): Promise<OutboundRespo
     }
     if (id === 'share_location') return handleOnboarding(msg, user)
     if (id === 'dislike_event') {
+      const event = ctx?.lastEvents?.find((e) => e.id === msg.action!.payload)
+      if (event?.category) updateTaste(user.id, event.category, 'disliked').catch(() => {})
       return handleDislike(msg, user, msg.action!.payload)
     }
     if (id === 'see_more') {
@@ -319,6 +332,41 @@ async function handleGreeting(
 
   // New user — standard onboarding
   return handleOnboarding(msg, user as Parameters<typeof handleOnboarding>[1])
+}
+
+async function handleEventDetail(
+  msg: InboundMessage,
+  eventId: string,
+  ctx: ConversationContext | null,
+): Promise<OutboundResponse> {
+  const event = ctx?.lastEvents?.find((e) => e.id === eventId)
+  if (!event) {
+    return { type: 'message', text: "I've lost track of that event — try searching again." }
+  }
+
+  // Get or generate AI summary on demand
+  let enriched = event
+  const cached = await getCachedCard(event.id, msg.platform)
+  if (cached?.aiSummary) {
+    enriched = { ...event, aiSummary: cached.aiSummary }
+  } else {
+    try {
+      const aiSummary = await formatEventCard(event, msg.platform)
+      enriched = { ...event, aiSummary }
+      await setCachedCard(enriched, msg.platform)
+    } catch {
+      // proceed without summary
+    }
+  }
+
+  return {
+    type: 'event_card',
+    text: '',
+    events: [enriched],
+    actions: enriched.url
+      ? [{ label: '🎟 Get Tickets', id: 'book_event', payload: enriched.id }]
+      : [],
+  }
 }
 
 async function handleUnknown(text: string, lastCity?: string): Promise<OutboundResponse> {

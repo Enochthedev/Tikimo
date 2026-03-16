@@ -79,6 +79,7 @@ function normalisePhqEvent(e: PhqEvent, fallbackLat: number, fallbackLng: number
     priceRange: undefined,
     url: `https://predicthq.com/events/${e.id}`,
     category: e.category,
+    hypeScore: e.phq_attendance ?? 0,
   }
 }
 

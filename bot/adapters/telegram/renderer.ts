@@ -20,9 +20,7 @@ export async function renderTelegramResponse(
   try {
     switch (response.type) {
       case 'message':
-      case 'event_card':
       case 'deep_link': {
-        // Use ReplyKeyboard for location request, InlineKeyboard for everything else
         const locationAction = response.actions?.find((a) => a.id === 'share_location')
         if (locationAction) {
           const kb = new Keyboard().requestLocation(locationAction.label).resized().oneTime()
@@ -34,6 +32,16 @@ export async function renderTelegramResponse(
             reply_markup: keyboard ?? undefined,
           })
         }
+        break
+      }
+
+      case 'event_card': {
+        const text = buildEventDetailText(response)
+        const keyboard = buildKeyboard(response)
+        await ctx.reply(text, {
+          parse_mode: 'Markdown',
+          reply_markup: keyboard ?? undefined,
+        })
         break
       }
 
@@ -68,6 +76,8 @@ export async function renderTelegramResponse(
   }
 }
 
+const NUMBER_EMOJI = ['1️⃣', '2️⃣', '3️⃣', '4️⃣', '5️⃣']
+
 function buildEventListText(response: OutboundResponse): string {
   const lines = [response.text]
   if (response.events) {
@@ -75,23 +85,56 @@ function buildEventListText(response: OutboundResponse): string {
       lines.push(`\n*${i + 1}. ${e.name}*`)
       lines.push(`📅 ${formatEventDate(e.date)}`)
       lines.push(`📍 ${e.venue}, ${e.city}`)
-      if (e.priceRange) lines.push(`💰 ${e.priceRange}`)
-      if (e.aiSummary) lines.push(`_${e.aiSummary}_`)
-      if (e.additionalSlots) lines.push(`🔁 ${e.additionalSlots + 1} time slots available`)
+      if (e.additionalSlots) lines.push(`🔁 ${e.additionalSlots + 1} dates available`)
     })
+    lines.push('\n_Tap a number for details, or tell me which one you like_')
   }
+  return lines.join('\n')
+}
+
+function buildEventDetailText(response: OutboundResponse): string {
+  const e = response.events?.[0]
+  if (!e) return response.text
+  const lines: string[] = []
+  lines.push(`*${e.name}*`)
+  lines.push(`📅 ${formatEventDate(e.date)}`)
+  lines.push(`📍 ${e.venue}, ${e.city}`)
+  if (e.priceRange) lines.push(`💰 ${e.priceRange}`)
+  if (e.additionalSlots) lines.push(`🔁 ${e.additionalSlots + 1} dates available`)
+  if (e.aiSummary) lines.push(`\n_${e.aiSummary}_`)
   return lines.join('\n')
 }
 
 function buildKeyboard(response: OutboundResponse): InlineKeyboard | null {
   if (!response.actions?.length) return null
   const kb = new InlineKeyboard()
+
+  if (response.type === 'event_list' && response.events) {
+    // Row of numbered detail buttons
+    const events = response.events.slice(0, 5)
+    for (let i = 0; i < events.length; i++) {
+      kb.text(NUMBER_EMOJI[i] ?? `${i + 1}`, `event_detail:${events[i].id}`)
+    }
+    kb.row()
+    // Navigation actions on their own row
+    for (const action of response.actions) {
+      kb.text(action.label, `${action.id}:${action.payload}`).row()
+    }
+    return kb
+  }
+
+  // event_card / detail view — show booking URL if valid
   for (const action of response.actions) {
     if (action.id === 'book_event' && response.events) {
       const event = response.events.find((e) => e.id === action.payload)
-      if (event) {
-        kb.url(action.label, event.url).row()
-        continue
+      if (event?.url) {
+        try {
+          new URL(event.url) // validate URL is well-formed
+          kb.url('🎟 Get Tickets', event.url).row()
+          continue
+        } catch {
+          // bad URL — skip the button
+        }
       }
     }
     kb.text(action.label, `${action.id}:${action.payload}`).row()

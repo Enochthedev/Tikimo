@@ -1,4 +1,5 @@
 import type { Platform } from '@/core/types/message.js'
+import type { NormalisedEvent } from '@/core/types/response.js'
 import { redis } from './redis.js'
 
 // 2-hour active conversation window
@@ -17,6 +18,7 @@ export interface ConversationContext {
   // Search context
   lastEventIds?: string[]
   lastEventNames?: string[]
+  lastEvents?: NormalisedEvent[]   // full event objects for on-demand detail
   lastCategory?: string
   currentPage: number
 

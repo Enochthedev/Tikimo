@@ -1,9 +1,9 @@
 import { updateUserLocation } from '@/db/queries.js'
-import { formatEventCard } from '@/services/ai/formatter.js'
-import { getCachedCard, setCachedCard } from '@/services/cache/cardCache.js'
-import { updateContext } from '@/services/cache/contextCache.js'
+import { getContext, updateContext } from '@/services/cache/contextCache.js'
 import { getEvents } from '@/services/events/aggregator.js'
 import { latLngToCell } from '@/services/events/aggregator.js'
+import { rankEvents } from '@/services/ranking/scorer.js'
+import { getTaste, updateTasteBatch } from '@/services/ranking/tasteModel.js'
 import { recordViewed, recordZeroResults, recordSearch } from '@/services/tracking/interactions.js'
 import { logger } from '@/utils/logger.js'
 import type { InboundMessage } from '../types/message.js'
@@ -16,6 +16,7 @@ interface DiscoveryOptions {
 }
 
 const RADIUS_STEPS = [10, 25, 50]
+const PAGE_SIZE = 5
 
 export async function handleDiscovery(
   msg: InboundMessage,
@@ -52,7 +53,6 @@ export async function handleDiscovery(
     geoCell = result.geoCell
     fromCache = result.fromCache
     usedRadius = radius
-
     if (events.length > 0) break
   }
 
@@ -67,39 +67,59 @@ export async function handleDiscovery(
     }
   }
 
-  const enriched = await enrichEvents(events, msg.platform)
-  await recordViewed(user.id, enriched, geoCell, msg.platform)
+  // Get context for page offset and dislikes
+  const ctx = await getContext(msg.platform, msg.userId)
+  const page = ctx?.currentPage ?? 0
+  const dislikedEventIds = ctx?.dislikedEventIds ?? []
+  const dislikedCategories = ctx?.dislikedCategories ?? []
 
-  // Stream search analytics to ClickHouse (fire and forget)
+  // Rank using the full algorithm
+  const [taste] = await Promise.all([getTaste(user.id)])
+  const ranked = rankEvents(events, {
+    category: options?.category,
+    dislikedEventIds,
+    dislikedCategories,
+    taste,
+  })
+
+  // Paginate
+  const pageStart = page * PAGE_SIZE
+  const top = ranked.slice(pageStart, pageStart + PAGE_SIZE)
+  const hasMore = ranked.length > pageStart + PAGE_SIZE
+
+  // Weak positive signal for viewed categories — fire and forget
+  updateTasteBatch(user.id, top.map((e) => e.category), 'viewed').catch(() => {})
+
+  await recordViewed(user.id, top, geoCell, msg.platform)
+
   recordSearch({
     userId: user.id,
     platform: msg.platform,
     city: options?.cityLabel ?? '',
     geoCell,
     radiusKm: usedRadius,
-    resultCount: enriched.length,
+    resultCount: ranked.length,
     fromCache,
   })
 
+  // Store full ranked list in context — detail handler + see_more uses it
   await updateContext(msg.platform, msg.userId, {
-    lastEventIds: enriched.map((e) => e.id),
-    lastEventNames: enriched.map((e) => e.name),
-    currentPage: 0,
-  }).catch(() => {}) // don't fail discovery if context update fails
+    lastEventIds: ranked.map((e) => e.id),
+    lastEventNames: ranked.map((e) => e.name),
+    lastEvents: ranked.slice(0, 20), // store top 20 for detail lookups
+    currentPage: page,
+  }).catch(() => {})
 
   const locationLabel = options?.cityLabel ?? 'near you'
   const radiusNote = usedRadius > user.radiusKm ? ` (searched ${usedRadius}km out)` : ''
+  const pageNote = page > 0 ? ` (page ${page + 1})` : ''
 
   return {
     type: 'event_list',
-    text: `Found ${enriched.length} things ${locationLabel}${radiusNote}. Here's what's good:`,
-    events: enriched,
+    text: `Here's what's on ${locationLabel}${radiusNote}${pageNote}:`,
+    events: top,
     actions: [
-      ...enriched.slice(0, 5).flatMap((e) => [
-        { label: `🎟 ${e.name.slice(0, 25)}`, id: 'book_event', payload: e.id },
-        { label: '👎', id: 'dislike_event', payload: e.id },
-      ]),
-      { label: '➕ See more', id: 'see_more', payload: 'next' },
+      ...(hasMore ? [{ label: '➕ See more', id: 'see_more', payload: 'next' }] : []),
       { label: '🔀 Something different', id: 'something_different', payload: 'refresh' },
     ],
   }
@@ -113,25 +133,4 @@ function buildRadiusSteps(userRadius: number): number[] {
     }
   }
   return steps
-}
-
-async function enrichEvents(
-  events: NormalisedEvent[],
-  platform: InboundMessage['platform'],
-): Promise<NormalisedEvent[]> {
-  return Promise.all(
-    events.map(async (event) => {
-      const cached = await getCachedCard(event.id, platform)
-      if (cached?.aiSummary) return { ...event, aiSummary: cached.aiSummary }
-
-      try {
-        const aiSummary = await formatEventCard(event, platform)
-        const enriched = { ...event, aiSummary }
-        await setCachedCard(enriched, platform)
-        return enriched
-      } catch {
-        return event
-      }
-    }),
-  )
 }
