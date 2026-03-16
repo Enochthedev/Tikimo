@@ -131,7 +131,10 @@ export async function processMessage(msg: InboundMessage): Promise<OutboundRespo
         }
 
       case 'find_events':
-        return handleDiscovery(msg, user)
+        return handleDiscovery(msg, user, {
+          category: intent.category,
+          keyword: intent.artist ?? intent.venueName,
+        })
 
       case 'find_events_in_city': {
         // A city follow-up after results confirms the previous intent was understood
@@ -140,7 +143,7 @@ export async function processMessage(msg: InboundMessage): Promise<OutboundRespo
         }
         const city = intent.city ?? ctx?.lastCity
         if (city) {
-          return handleCitySearch(msg, user, city, intent.category, ctx?.lastCountry)
+          return handleCitySearch(msg, user, city, intent.category, ctx?.lastCountry, intent.artist ?? intent.venueName)
         }
         return handleDiscovery(msg, user)
       }
@@ -190,6 +193,7 @@ async function handleCitySearch(
   cityName: string,
   category?: string,
   biasCountry?: string,
+  keyword?: string,
 ): Promise<OutboundResponse> {
   if (!biasCountry) {
     const options = getAmbiguousCityOptions(cityName)
@@ -233,6 +237,7 @@ async function handleCitySearch(
   return handleDiscovery(cityMsg, { ...user, radiusKm: Math.max(user.radiusKm, 15) }, {
     cityLabel: `${geo.city}, ${geo.country}`,
     category,
+    keyword,
   })
 }
 

@@ -20,14 +20,16 @@ export async function searchSerpApi(params: {
   lng: number
   cityLabel?: string
   category?: string
+  keyword?: string
 }): Promise<NormalisedEvent[]> {
   if (!env.SERPAPI_KEY) return []
 
-  const { lat, lng, cityLabel, category } = params
+  const { lat, lng, cityLabel, category, keyword } = params
 
-  // Build query: use city label if available, otherwise coords
+  // Build query: keyword (artist/venue) takes priority, then category, then generic
   const locationQuery = cityLabel ?? `${lat},${lng}`
-  const q = category ? `${category} events in ${locationQuery}` : `events in ${locationQuery}`
+  const subject = keyword ?? category ?? null
+  const q = subject ? `${subject} events in ${locationQuery}` : `events in ${locationQuery}`
 
   try {
     const data = await ky

@@ -28,11 +28,12 @@ export async function searchDice(params: {
   lng: number
   radiusKm: number
   category?: string
+  keyword?: string
 }): Promise<NormalisedEvent[]> {
   // Dice API key is optional — returns empty if not configured
   if (!env.DICE_API_KEY) return []
 
-  const { lat, lng, radiusKm, category } = params
+  const { lat, lng, radiusKm, category, keyword } = params
 
   try {
     const query: Record<string, string | number> = {
@@ -43,6 +44,7 @@ export async function searchDice(params: {
     }
 
     if (category) query.genre = category
+    if (keyword) query.q = keyword
 
     const data = await ky
       .get(`${BASE}/events`, {

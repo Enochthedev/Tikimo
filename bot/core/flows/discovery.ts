@@ -13,6 +13,7 @@ import type { User } from '../types/user.js'
 interface DiscoveryOptions {
   cityLabel?: string
   category?: string
+  keyword?: string  // artist name or venue name
 }
 
 const RADIUS_STEPS = [10, 25, 50]
@@ -48,7 +49,7 @@ export async function handleDiscovery(
   let usedRadius = user.radiusKm
 
   for (const radius of radii) {
-    const result = await getEvents({ lat, lng, radiusKm: radius, category: options?.category })
+    const result = await getEvents({ lat, lng, radiusKm: radius, category: options?.category, keyword: options?.keyword })
     events = result.events
     geoCell = result.geoCell
     fromCache = result.fromCache
@@ -77,6 +78,7 @@ export async function handleDiscovery(
   const [taste] = await Promise.all([getTaste(user.id)])
   const ranked = rankEvents(events, {
     category: options?.category,
+    keyword: options?.keyword,
     dislikedEventIds,
     dislikedCategories,
     taste,

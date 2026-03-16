@@ -18,6 +18,7 @@ import type { NormalisedEvent } from '@/core/types/response.js'
 
 export interface RankingContext {
   category?: string           // from parsed intent — undefined = vague query
+  keyword?: string            // artist name or venue name — strongest relevance signal
   dislikedEventIds?: string[]
   dislikedCategories?: string[]
   taste: Record<string, number>  // from tasteModel.getTaste()
@@ -56,8 +57,9 @@ export function rankEvents(
   events: NormalisedEvent[],
   ctx: RankingContext,
 ): NormalisedEvent[] {
-  const { category, dislikedEventIds = [], dislikedCategories = [], taste } = ctx
-  const specificity = category ? 'specific' : 'vague'
+  const { category, keyword, dislikedEventIds = [], dislikedCategories = [], taste } = ctx
+  // keyword (artist/venue) is the most specific signal possible
+  const specificity = (category || keyword) ? 'specific' : 'vague'
   const weights = WEIGHTS[specificity]
 
   // Hard exclusions
@@ -74,7 +76,7 @@ export function rankEvents(
     const recency  = recencyScore(event.date)
     const hype     = hypeScore(event)
     const personal = personalScore(event.category, taste)
-    const relevance = relevanceScore(event, category)
+    const relevance = relevanceScore(event, category, keyword)
 
     const score =
       recency   * weights.recency   +
@@ -155,15 +157,25 @@ function personalScore(category: string | undefined, taste: Record<string, numbe
   return (affinity + 1) / 2
 }
 
-function relevanceScore(event: NormalisedEvent, queryCategory?: string): number {
-  if (!queryCategory) return 0.5  // vague query — relevance is neutral
+function relevanceScore(event: NormalisedEvent, queryCategory?: string, keyword?: string): number {
+  const name = event.name.toLowerCase()
+  const venue = event.venue.toLowerCase()
+
+  // Keyword (artist/venue name) is highest-priority signal
+  if (keyword) {
+    const kw = keyword.toLowerCase()
+    if (name.includes(kw) || venue.includes(kw)) return 1.0
+    // Partial word match (e.g. "Davido" in "Davido Live Tour 2026")
+    if (kw.split(' ').some((word) => name.includes(word) || venue.includes(word))) return 0.75
+  }
+
+  if (!queryCategory) return 0.5  // vague query — neutral
 
   const q = queryCategory.toLowerCase()
   const cat = event.category?.toLowerCase() ?? ''
-  const name = event.name.toLowerCase()
 
-  if (cat === q)             return 1.0   // exact category match
-  if (cat.includes(q) || q.includes(cat)) return 0.8  // partial match
-  if (name.includes(q))      return 0.6   // keyword in event name
-  return 0.1                              // no match
+  if (cat === q)                           return 1.0
+  if (cat.includes(q) || q.includes(cat)) return 0.8
+  if (name.includes(q))                   return 0.6
+  return 0.1
 }

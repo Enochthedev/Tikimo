@@ -7,7 +7,9 @@ export interface ParsedIntent {
   intent: 'find_events' | 'find_events_in_city' | 'change_city' | 'greeting' | 'help' | 'lucky' | 'map' | 'browse' | 'life_of_party' | 'unknown'
   city?: string
   category?: string
-  query?: string // original text for context
+  artist?: string    // performer / act name e.g. "Davido", "Burna Boy"
+  venueName?: string // specific venue e.g. "O2 Arena", "Madison Square Garden"
+  query?: string
 }
 
 const INTENT_PROMPT = `You are an intent classifier for Tiximo, an event discovery bot.
@@ -28,6 +30,8 @@ Intents:
 
 Extract "city" if a location is mentioned.
 Extract "category" if an event type is mentioned (music, comedy, sports, food, art, nightlife, etc).
+Extract "artist" if a performer, artist, or act name is mentioned (e.g. "Davido", "Burna Boy", "Coldplay").
+Extract "venueName" if a specific venue or stadium is mentioned (e.g. "O2 Arena", "Wembley", "Madison Square Garden").
 
 Examples:
 User: "any good concerts in Lagos this weekend?"
@@ -62,6 +66,18 @@ User: "nahh I'm feeling Cape Town better"
 
 User: "actually check Lagos"
 {"intent":"change_city","city":"Lagos"}
+
+User: "what Davido concerts are happening"
+{"intent":"find_events","category":"music","artist":"Davido"}
+
+User: "any Burna Boy shows in London"
+{"intent":"find_events_in_city","city":"London","category":"music","artist":"Burna Boy"}
+
+User: "concerts at the O2 Arena"
+{"intent":"find_events","category":"music","venueName":"O2 Arena"}
+
+User: "what's happening at Wembley this weekend"
+{"intent":"find_events","venueName":"Wembley"}
 
 Now classify this message:`
 

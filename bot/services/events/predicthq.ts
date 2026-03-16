@@ -24,10 +24,11 @@ export async function searchPredictHq(params: {
   lng: number
   radiusKm: number
   category?: string
+  keyword?: string
 }): Promise<NormalisedEvent[]> {
   if (!env.PREDICTHQ_API_KEY) return []
 
-  const { lat, lng, radiusKm, category } = params
+  const { lat, lng, radiusKm, category, keyword } = params
   const today = new Date().toISOString().split('T')[0]
 
   try {
@@ -40,6 +41,7 @@ export async function searchPredictHq(params: {
     }
 
     if (category) query.category = mapCategory(category)
+    if (keyword) query.q = keyword
 
     const data = await ky
       .get(`${BASE}/events/`, {

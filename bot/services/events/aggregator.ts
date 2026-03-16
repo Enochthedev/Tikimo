@@ -20,8 +20,9 @@ export async function getEvents(params: {
   lng: number
   radiusKm: number
   category?: string
+  keyword?: string  // artist name, venue name, or free-text search
 }): Promise<{ events: NormalisedEvent[]; geoCell: string; fromCache: boolean }> {
-  const { lat, lng, radiusKm, category } = params
+  const { lat, lng, radiusKm, category, keyword } = params
   const geoCell = latLngToCell(lat, lng)
 
   const cached = await getGeoCachedEvents(geoCell, radiusKm, category)
@@ -41,12 +42,12 @@ export async function getEvents(params: {
 
   const [tmEvents, ebEvents, phqEvents, serpEvents, skiddleEvents, diceEvents] =
     await Promise.allSettled([
-      searchTicketmaster({ lat, lng, radiusKm, category }),
-      searchEventbrite({ lat, lng, radiusKm, category }),
-      searchPredictHq({ lat, lng, radiusKm, category }),
-      env.SERPAPI_KEY ? searchSerpApi({ lat, lng, category }) : Promise.resolve([]),
-      env.SKIDDLE_API_KEY ? searchSkiddle({ lat, lng, radiusKm, category }) : Promise.resolve([]),
-      env.DICE_API_KEY ? searchDice({ lat, lng, radiusKm, category }) : Promise.resolve([]),
+      searchTicketmaster({ lat, lng, radiusKm, category, keyword }),
+      searchEventbrite({ lat, lng, radiusKm, category, keyword }),
+      searchPredictHq({ lat, lng, radiusKm, category, keyword }),
+      env.SERPAPI_KEY ? searchSerpApi({ lat, lng, category, keyword }) : Promise.resolve([]),
+      env.SKIDDLE_API_KEY ? searchSkiddle({ lat, lng, radiusKm, category, keyword }) : Promise.resolve([]),
+      env.DICE_API_KEY ? searchDice({ lat, lng, radiusKm, category, keyword }) : Promise.resolve([]),
     ])
 
   const events: NormalisedEvent[] = [

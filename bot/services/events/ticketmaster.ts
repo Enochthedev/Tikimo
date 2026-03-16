@@ -26,8 +26,9 @@ export async function searchTicketmaster(params: {
   lng: number
   radiusKm: number
   category?: string
+  keyword?: string
 }): Promise<NormalisedEvent[]> {
-  const { lat, lng, radiusKm, category } = params
+  const { lat, lng, radiusKm, category, keyword } = params
 
   // Only fetch future events — ISO 8601 format required by TM API
   const now = new Date()
@@ -44,6 +45,7 @@ export async function searchTicketmaster(params: {
   }
 
   if (category) query.classificationName = category
+  if (keyword) query.keyword = keyword
 
   const data = await ky
     .get(`${BASE}/events.json`, { searchParams: query, timeout: 15_000 })

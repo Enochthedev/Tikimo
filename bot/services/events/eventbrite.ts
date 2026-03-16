@@ -27,8 +27,9 @@ export async function searchEventbrite(params: {
   lng: number
   radiusKm: number
   category?: string
+  keyword?: string
 }): Promise<NormalisedEvent[]> {
-  const { lat, lng, radiusKm } = params
+  const { lat, lng, radiusKm, keyword } = params
 
   const query: Record<string, string> = {
     'location.latitude': String(lat),
@@ -37,6 +38,7 @@ export async function searchEventbrite(params: {
     expand: 'venue,ticket_availability,category',
     page_size: '20',
   }
+  if (keyword) query.q = keyword
 
   const data = await ky
     .get(`${BASE}/events/search/`, {

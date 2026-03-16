@@ -28,10 +28,11 @@ export async function searchSkiddle(params: {
   lng: number
   radiusKm: number
   category?: string
+  keyword?: string
 }): Promise<NormalisedEvent[]> {
   if (!env.SKIDDLE_API_KEY) return []
 
-  const { lat, lng, radiusKm, category } = params
+  const { lat, lng, radiusKm, category, keyword } = params
   const today = new Date().toISOString().split('T')[0]
 
   try {
@@ -46,6 +47,7 @@ export async function searchSkiddle(params: {
     }
 
     if (category) query.e = mapCategory(category)
+    if (keyword) query.keyword = keyword
 
     const data = await ky
       .get(`${BASE}/events/search/`, { searchParams: query, timeout: 10_000 })
