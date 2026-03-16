@@ -1,5 +1,6 @@
 import ky from 'ky'
 import { env } from '@/config/env.js'
+import { logger } from '@/utils/logger.js'
 
 // Cities that are commonly confused — map to their most-searched versions
 // Key: normalised input, Value: [most likely (biggest city), alternative]
@@ -43,7 +44,8 @@ export async function reverseGeocode(
     const props = data.features[0]?.properties
     if (!props) return null
     return { city: props.city ?? 'Unknown', country: props.country ?? 'Unknown' }
-  } catch {
+  } catch (err) {
+    logger.error({ lat, lng, err }, 'geocoder: reverse geocode failed')
     return null
   }
 }
@@ -100,7 +102,8 @@ export async function forwardGeocode(
       city: props.city ?? props.name ?? cityName,
       country: props.country ?? 'Unknown',
     }
-  } catch {
+  } catch (err) {
+    logger.error({ cityName, biasCountry, err }, 'geocoder: forward geocode failed')
     return null
   }
 }
