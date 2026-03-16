@@ -1,14 +1,14 @@
-/* ─── Pilowlava — wordmark/hero only ──────────────────────────────────────── */
+/* ─── Clash Display — hero / big display ───────────────────────────────────── */
 
 @font-face {
-  font-family: 'Pilowlava';
-  src: url('/fonts/Pilowlava-Regular.woff2') format('woff2');
-  font-weight: 400;
+  font-family: 'Clash Display';
+  src: url('/fonts/ClashDisplay-Variable.woff2') format('woff2');
+  font-weight: 200 700;
   font-style: normal;
   font-display: swap;
 }
 
-/* ─── Cabinet Grotesk — display + UI ──────────────────────────────────────── */
+/* ─── Cabinet Grotesk — headings + UI ──────────────────────────────────────── */
 
 @font-face {
   font-family: 'Cabinet Grotesk';
@@ -18,80 +18,68 @@
   font-display: swap;
 }
 
-/* ─── CSS Reset ────────────────────────────────────────────────────────────── */
+/* ─── Reset ────────────────────────────────────────────────────────────────── */
 
-*,
-*::before,
-*::after {
-  box-sizing: border-box;
-  margin: 0;
-  padding: 0;
-}
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
-/* ─── CSS Variables ────────────────────────────────────────────────────────── */
+/* ─── Variables ────────────────────────────────────────────────────────────── */
 
 :root {
-  --fire: #FF4500;
-  --ember: #FF8C00;
-  --glow: #FFD700;
-  --bg: #080808;
-  --panel: #111;
-  --border: #1e1e1e;
-  --text: #F5F0E8;
-  --muted: #666;
-  --radius: 20px;
+  --bg:       #0b0b0d;
+  --surface:  #141416;
+  --border:   #1e1e22;
+  --text:     #f2ece0;
+  --dim:      #6d6860;
+  --accent:   #d4583a;
+  --warm:     #c4915a;
+  --glow:     #e8c466;
+  --radius:   14px;
 
-  /* Font stacks */
-  --font-display: 'Cabinet Grotesk', system-ui, sans-serif;
-  --font-wordmark: 'Pilowlava', 'Cabinet Grotesk', system-ui, sans-serif;
-  --font-body: system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --font-display: 'Clash Display', system-ui, sans-serif;
+  --font-heading: 'Cabinet Grotesk', system-ui, sans-serif;
+  --font-body:    'Cabinet Grotesk', system-ui, -apple-system, 'Segoe UI', sans-serif;
 }
 
 /* ─── Base ─────────────────────────────────────────────────────────────────── */
 
-html {
-  scroll-behavior: smooth;
-  overflow-x: hidden;
-  font-size: 16px;
-}
+html { scroll-behavior: smooth; overflow-x: hidden; }
 
 body {
   background: var(--bg);
   color: var(--text);
   font-family: var(--font-body);
+  font-size: 16px;
+  line-height: 1.6;
   overflow-x: hidden;
   -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-  line-height: 1.6;
 }
+
+img, svg { display: block; max-width: 100%; }
+a { color: inherit; }
 
 /* ─── Layout ───────────────────────────────────────────────────────────────── */
 
-.container {
-  max-width: 1060px;
-  margin: 0 auto;
-  padding: 0 24px;
-}
+.container { max-width: 1060px; margin: 0 auto; padding: 0 28px; }
 
-/* ─── Typography ──────────────────────────────────────────────────────────── */
+/* ─── Section defaults ─────────────────────────────────────────────────────── */
 
-.section-eyebrow {
-  display: inline-block;
+.section-label {
   font-family: var(--font-body);
   font-size: 12px;
-  font-weight: 600;
+  font-weight: 500;
   letter-spacing: 3px;
   text-transform: uppercase;
-  color: var(--fire);
+  color: var(--dim);
   margin-bottom: 16px;
 }
 
 .section-title {
   font-family: var(--font-display);
-  font-size: clamp(32px, 6vw, 56px);
-  font-weight: 800;
+  font-size: clamp(30px, 5vw, 56px);
+  font-weight: 600;
   letter-spacing: -1.5px;
   line-height: 1.05;
+  color: var(--text);
 }
 
 /* ─── Buttons ──────────────────────────────────────────────────────────────── */
@@ -100,83 +88,39 @@ body {
   display: inline-flex;
   align-items: center;
   gap: 8px;
-  padding: 14px 28px;
+  padding: 14px 30px;
   border-radius: 100px;
-  font-family: var(--font-display);
-  font-size: 16px;
-  font-weight: 700;
+  font-family: var(--font-heading);
+  font-size: 15px;
+  font-weight: 600;
   text-decoration: none;
   cursor: pointer;
   border: none;
-  transition: transform 0.2s ease, box-shadow 0.2s ease, opacity 0.2s ease;
+  transition: transform 0.2s, box-shadow 0.2s, opacity 0.2s;
   white-space: nowrap;
 }
 
-.btn:hover {
-  transform: translateY(-2px);
-}
+.btn:hover { transform: translateY(-1px); }
+.btn:active { transform: translateY(0); }
 
-.btn:active {
-  transform: translateY(0);
-}
-
-.btn-fire {
-  background: linear-gradient(135deg, var(--fire), var(--ember));
+.btn-primary {
+  background: var(--accent);
   color: #fff;
-  box-shadow: 0 4px 24px rgba(255, 69, 0, 0.35);
+  box-shadow: 0 4px 24px rgba(212, 88, 58, 0.25);
 }
+.btn-primary:hover { box-shadow: 0 8px 32px rgba(212, 88, 58, 0.35); }
 
-.btn-fire:hover {
-  box-shadow: 0 8px 32px rgba(255, 69, 0, 0.55);
-}
-
-.btn-ghost {
+.btn-outline {
   background: transparent;
   color: var(--text);
-  border: 2px solid var(--border);
+  border: 1.5px solid var(--border);
 }
-
-.btn-ghost:hover {
-  border-color: var(--ember);
-  color: var(--ember);
-}
-
-/* ─── Divider ──────────────────────────────────────────────────────────────── */
-
-.wave-divider {
-  display: block;
-  width: 100%;
-  line-height: 0;
-  overflow: hidden;
-}
-
-.wave-divider svg {
-  display: block;
-  width: 100%;
-}
+.btn-outline:hover { border-color: var(--dim); }
 
 /* ─── Scrollbar ────────────────────────────────────────────────────────────── */
 
-::-webkit-scrollbar {
-  width: 6px;
-}
+::-webkit-scrollbar { width: 4px; }
+::-webkit-scrollbar-track { background: var(--bg); }
+::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
 
-::-webkit-scrollbar-track {
-  background: var(--bg);
-}
-
-::-webkit-scrollbar-thumb {
-  background: var(--border);
-  border-radius: 3px;
-}
-
-::-webkit-scrollbar-thumb:hover {
-  background: var(--muted);
-}
-
-/* ─── Selection ────────────────────────────────────────────────────────────── */
-
-::selection {
-  background: rgba(255, 69, 0, 0.3);
-  color: var(--text);
-}
+::selection { background: rgba(212, 88, 58, 0.2); color: var(--text); }
