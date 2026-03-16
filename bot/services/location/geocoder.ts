@@ -2,6 +2,47 @@ import ky from 'ky'
 import { env } from '@/config/env.js'
 import { logger } from '@/utils/logger.js'
 
+// Common country names → ISO 3166-1 alpha-2 codes
+// Covers the most common cases users type; Geoapify requires the ISO code for countrycode filter
+const COUNTRY_TO_ISO: Record<string, string> = {
+  nigeria: 'ng', 'nigeria.': 'ng',
+  portugal: 'pt',
+  'united kingdom': 'gb', uk: 'gb', england: 'gb', britain: 'gb',
+  canada: 'ca',
+  seychelles: 'sc',
+  'united states': 'us', usa: 'us', us: 'us', america: 'us',
+  ghana: 'gh',
+  kenya: 'ke',
+  'south africa': 'za',
+  ethiopia: 'et',
+  tanzania: 'tz',
+  uganda: 'ug',
+  cameroon: 'cm',
+  senegal: 'sn',
+  'ivory coast': 'ci', 'cote d\'ivoire': 'ci',
+  france: 'fr',
+  germany: 'de',
+  spain: 'es',
+  italy: 'it',
+  australia: 'au',
+  india: 'in',
+  brazil: 'br',
+}
+
+// Parse "Lagos, Nigeria" → { city: "Lagos", countryCode: "ng" }
+// Returns null if no country suffix detected
+export function parseCityCountry(cityName: string): { city: string; countryCode: string } | null {
+  const commaIdx = cityName.indexOf(',')
+  if (commaIdx < 0) return null
+
+  const city = cityName.slice(0, commaIdx).trim()
+  const countryRaw = cityName.slice(commaIdx + 1).trim().toLowerCase()
+  const countryCode = COUNTRY_TO_ISO[countryRaw]
+
+  if (!countryCode) return null
+  return { city, countryCode }
+}
+
 // Cities that are commonly confused — options paired with their ISO alpha-2 country codes
 const AMBIGUOUS_CITIES: Record<string, { options: [string, string]; codes: [string, string] }> = {
   lagos:    { options: ['Lagos, Nigeria',              'Lagos, Portugal'],                    codes: ['ng', 'pt'] },
@@ -104,6 +145,14 @@ export async function forwardGeocode(
   cityName: string,
   biasCountryCode?: string, // ISO 3166-1 alpha-2, e.g. 'ng', 'gb'
 ): Promise<{ lat: number; lng: number; city: string; country: string; countryCode: string } | null> {
+  // If cityName is "Lagos, Nigeria" style, extract the country code and strip it from the search text
+  const parsed = parseCityCountry(cityName)
+  if (parsed) {
+    cityName = parsed.city
+    biasCountryCode = biasCountryCode ?? parsed.countryCode
+    logger.debug({ cityName, biasCountryCode }, 'geocoder: parsed city+country from input')
+  }
+
   // If we have a country code bias, try the filtered search first
   if (biasCountryCode) {
     try {
