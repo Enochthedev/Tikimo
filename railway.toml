@@ -1,9 +1,9 @@
 [build]
 builder = "nixpacks"
-buildCommand = "pnpm install && pnpm build"
+buildCommand = "pnpm install --filter tiximo && pnpm --filter tiximo build"
 
 [deploy]
-startCommand = "pnpm start"
+startCommand = "pnpm --filter tiximo start"
 healthcheckPath = "/health"
 healthcheckTimeout = 10
 restartPolicyType = "on_failure"
