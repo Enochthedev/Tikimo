@@ -2,7 +2,7 @@ import { complete } from '@/services/ai/client.js'
 import { logger } from '@/utils/logger.js'
 
 export interface ParsedIntent {
-  intent: 'find_events' | 'find_events_in_city' | 'greeting' | 'help' | 'lucky' | 'map' | 'browse' | 'unknown'
+  intent: 'find_events' | 'find_events_in_city' | 'change_city' | 'greeting' | 'help' | 'lucky' | 'map' | 'browse' | 'life_of_party' | 'unknown'
   city?: string
   category?: string
   query?: string // original text for context
@@ -15,11 +15,13 @@ Given a user message, extract the intent and any entities. Respond with ONLY val
 Intents:
 - "find_events" — user wants events near them (e.g., "what's happening", "any events", "show me stuff", "events near me")
 - "find_events_in_city" — user wants events in a specific city (e.g., "events in Lagos", "what's on in London", "check Lagos")
+- "change_city" — user wants to switch to a different city (e.g., "actually try Lagos", "nah check London instead", "what about Cape Town")
 - "greeting" — hello, hi, start, hey
 - "help" — how does this work, what can you do
 - "lucky" — feeling lucky, surprise me, random
 - "map" — show map, open map
 - "browse" — browse, explore categories
+- "life_of_party" — user wants the most hyped/going-off event (e.g., "what's going to bang", "what's lit tonight", "life of the party")
 - "unknown" — anything else
 
 Extract "city" if a location is mentioned.
@@ -41,8 +43,17 @@ User: "check for events in London"
 User: "surprise me"
 {"intent":"lucky"}
 
+User: "what's popping tonight"
+{"intent":"life_of_party"}
+
 User: "are there any comedy shows?"
 {"intent":"find_events","category":"comedy"}
+
+User: "nahh I'm feeling Cape Town better"
+{"intent":"change_city","city":"Cape Town"}
+
+User: "actually check Lagos"
+{"intent":"change_city","city":"Lagos"}
 
 Now classify this message:`
 

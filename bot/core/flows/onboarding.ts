@@ -8,7 +8,7 @@ export async function handleOnboarding(
 ): Promise<OutboundResponse> {
   return {
     type: 'message',
-    text: "Hi! I'm Tiximo. 👾\n\nTell me where you are and I'll find you something good.",
+    text: "Where are you headed tonight? 👀\n\nShare your location or tell me a city — like \"events in Lagos\".",
     actions: [{ label: '📍 Share Location', id: 'share_location', payload: 'share_location' }],
   }
 }

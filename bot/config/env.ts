@@ -38,6 +38,11 @@ const schema = z.object({
   UPSTASH_REDIS_URL: z.string().url(),
   UPSTASH_REDIS_TOKEN: z.string().min(1),
 
+  // Additional event APIs
+  SERPAPI_KEY: z.string().default(''),
+  SKIDDLE_API_KEY: z.string().default(''),
+  DICE_API_KEY: z.string().default(''),
+
   // Heatmap augmentation
   PREDICTHQ_API_KEY: z.string().default(''),
   SONGKICK_API_KEY: z.string().default(''),

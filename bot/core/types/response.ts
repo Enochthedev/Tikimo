@@ -1,6 +1,6 @@
 export interface NormalisedEvent {
   id: string
-  provider: 'ticketmaster' | 'eventbrite'
+  provider: 'ticketmaster' | 'eventbrite' | 'predicthq' | 'serpapi' | 'skiddle' | 'dice'
   name: string
   date: string
   venue: string
@@ -14,6 +14,7 @@ export interface NormalisedEvent {
   aiSummary?: string
   hypeScore?: number
   velocity?: number // rate of hype change — drives blob pulse speed
+  additionalSlots?: number
 }
 
 export interface OutboundResponse {

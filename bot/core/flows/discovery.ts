@@ -1,6 +1,7 @@
 import { updateUserLocation } from '@/db/queries.js'
 import { formatEventCard } from '@/services/ai/formatter.js'
 import { getCachedCard, setCachedCard } from '@/services/cache/cardCache.js'
+import { updateContext } from '@/services/cache/contextCache.js'
 import { getEvents } from '@/services/events/aggregator.js'
 import { latLngToCell } from '@/services/events/aggregator.js'
 import { recordViewed, recordZeroResults } from '@/services/tracking/interactions.js'
@@ -69,6 +70,12 @@ export async function handleDiscovery(
   const enriched = await enrichEvents(events, msg.platform)
   await recordViewed(user.id, enriched, geoCell)
 
+  await updateContext(msg.platform, msg.userId, {
+    lastEventIds: enriched.map((e) => e.id),
+    lastEventNames: enriched.map((e) => e.name),
+    currentPage: 0,
+  }).catch(() => {}) // don't fail discovery if context update fails
+
   const locationLabel = options?.cityLabel ?? 'near you'
   const radiusNote = usedRadius > user.radiusKm ? ` (searched ${usedRadius}km out)` : ''
 
@@ -76,11 +83,14 @@ export async function handleDiscovery(
     type: 'event_list',
     text: `Found ${enriched.length} things ${locationLabel}${radiusNote}. Here's what's good:`,
     events: enriched,
-    actions: enriched.slice(0, 5).map((e) => ({
-      label: `🎟 ${e.name.slice(0, 30)}`,
-      id: 'book_event',
-      payload: e.id,
-    })),
+    actions: [
+      ...enriched.slice(0, 5).flatMap((e) => [
+        { label: `🎟 ${e.name.slice(0, 25)}`, id: 'book_event', payload: e.id },
+        { label: '👎', id: 'dislike_event', payload: e.id },
+      ]),
+      { label: '➕ See more', id: 'see_more', payload: 'next' },
+      { label: '🔀 Something different', id: 'something_different', payload: 'refresh' },
+    ],
   }
 }
 

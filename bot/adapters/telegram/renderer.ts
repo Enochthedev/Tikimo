@@ -1,7 +1,17 @@
 import type { Context } from 'grammy'
 import { InlineKeyboard, InputFile, Keyboard } from 'grammy'
+import { format, isToday, isTomorrow } from 'date-fns'
 import type { OutboundResponse } from '@/core/types/response.js'
 import { logger } from '@/utils/logger.js'
+
+function formatEventDate(dateStr: string): string {
+  const date = new Date(dateStr)
+  if (isNaN(date.getTime())) return dateStr
+  const time = format(date, 'h:mmaaa')
+  if (isToday(date)) return `Tonight · ${time}`
+  if (isTomorrow(date)) return `Tomorrow · ${time}`
+  return `${format(date, 'EEE d MMM')} · ${time}`
+}
 
 export async function renderTelegramResponse(
   ctx: Context,
@@ -63,10 +73,11 @@ function buildEventListText(response: OutboundResponse): string {
   if (response.events) {
     response.events.slice(0, 5).forEach((e, i) => {
       lines.push(`\n*${i + 1}. ${e.name}*`)
-      lines.push(`📅 ${e.date}`)
+      lines.push(`📅 ${formatEventDate(e.date)}`)
       lines.push(`📍 ${e.venue}, ${e.city}`)
       if (e.priceRange) lines.push(`💰 ${e.priceRange}`)
       if (e.aiSummary) lines.push(`_${e.aiSummary}_`)
+      if (e.additionalSlots) lines.push(`🔁 ${e.additionalSlots + 1} time slots available`)
     })
   }
   return lines.join('\n')

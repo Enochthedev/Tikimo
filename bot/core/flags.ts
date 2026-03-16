@@ -31,6 +31,24 @@ export const FLAGS = {
   // Data pipeline
   WAREHOUSE_STREAMING: false, // stream to ClickHouse
   NIGHTLY_EXPORT: false,      // export to R2
+
+  // NLP + conversation
+  CONVERSATION_CONTEXT: true,
+
+  // Pagination + learning
+  PAGINATION: true,
+  DISLIKE_SIGNALS: true,
+  PREFERENCE_LEARNING: false,
+
+  // Life of the Party
+  LIFE_OF_PARTY: false,
+  TRAFFIC_SIGNAL: false,
+
+  // Data sources
+  SERPAPI_EVENTS: false,
+  PREDICTHQ_EVENTS: true,
+  SKIDDLE_EVENTS: false,
+  DICE_EVENTS: false,
 } as const
 
 export type FlagKey = keyof typeof FLAGS
