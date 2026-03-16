@@ -63,7 +63,7 @@ app.get('/map', (c) => {
 
 // ─── Start ────────────────────────────────────────────────────────────────────
 const server = serve(
-  { fetch: app.fetch, port: env.PORT, createServer },
+  { fetch: app.fetch, port: env.PORT, hostname: '0.0.0.0', createServer },
   (info: { port: number }) => {
     logger.info({ port: info.port }, 'tiximo api started')
   },
