@@ -43,7 +43,8 @@ export async function processMessage(msg: InboundMessage): Promise<OutboundRespo
     if (geo) {
       await updateContext(msg.platform, msg.userId, {
         lastCity: geo.city,
-        lastCountry: geo.country,
+        // Store ISO alpha-2 code (e.g. 'ng') not the full name — Geoapify countrycode filter requires it
+        lastCountry: geo.countryCode || geo.country,
         lastLat: lat,
         lastLng: lng,
       })
@@ -220,9 +221,10 @@ async function handleCitySearch(
   logger.info({ city: geo.city, country: geo.country, lat: geo.lat, lng: geo.lng }, 'geocoded city')
 
   // Persist city search to context so follow-up messages have it
+  // Store ISO country code (e.g. 'ng') so future city searches can bias correctly
   await updateContext(msg.platform, msg.userId, {
     lastCity: geo.city,
-    lastCountry: geo.country,
+    lastCountry: geo.countryCode || geo.country,
     lastLat: geo.lat,
     lastLng: geo.lng,
     lastCategory: category,
