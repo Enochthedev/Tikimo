@@ -1,5 +1,5 @@
 import type { Context } from 'grammy'
-import { InlineKeyboard, InputFile } from 'grammy'
+import { InlineKeyboard, InputFile, Keyboard } from 'grammy'
 import type { OutboundResponse } from '@/core/types/response.js'
 import { logger } from '@/utils/logger.js'
 
@@ -12,11 +12,18 @@ export async function renderTelegramResponse(
       case 'message':
       case 'event_card':
       case 'deep_link': {
-        const keyboard = buildKeyboard(response)
-        await ctx.reply(response.text, {
-          parse_mode: 'Markdown',
-          reply_markup: keyboard ?? undefined,
-        })
+        // Use ReplyKeyboard for location request, InlineKeyboard for everything else
+        const locationAction = response.actions?.find((a) => a.id === 'share_location')
+        if (locationAction) {
+          const kb = new Keyboard().requestLocation(locationAction.label).resized().oneTime()
+          await ctx.reply(response.text, { parse_mode: 'Markdown', reply_markup: kb })
+        } else {
+          const keyboard = buildKeyboard(response)
+          await ctx.reply(response.text, {
+            parse_mode: 'Markdown',
+            reply_markup: keyboard ?? undefined,
+          })
+        }
         break
       }
 
