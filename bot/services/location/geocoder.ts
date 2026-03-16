@@ -2,19 +2,36 @@ import ky from 'ky'
 import { env } from '@/config/env.js'
 import { logger } from '@/utils/logger.js'
 
-// Cities that are commonly confused — map to their most-searched versions
-// Key: normalised input, Value: [most likely (biggest city), alternative]
-const AMBIGUOUS_CITIES: Record<string, [string, string]> = {
-  lagos:    ['Lagos, Nigeria', 'Lagos, Portugal'],
-  london:   ['London, United Kingdom', 'London, Ontario, Canada'],
-  victoria: ['Victoria, Seychelles', 'Victoria, British Columbia, Canada'],
-  oxford:   ['Oxford, United Kingdom', 'Oxford, Mississippi, United States'],
+// Cities that are commonly confused — options paired with their ISO alpha-2 country codes
+const AMBIGUOUS_CITIES: Record<string, { options: [string, string]; codes: [string, string] }> = {
+  lagos:    { options: ['Lagos, Nigeria',              'Lagos, Portugal'],                    codes: ['ng', 'pt'] },
+  london:   { options: ['London, United Kingdom',      'London, Ontario, Canada'],            codes: ['gb', 'ca'] },
+  victoria: { options: ['Victoria, Seychelles',        'Victoria, British Columbia, Canada'], codes: ['sc', 'ca'] },
+  oxford:   { options: ['Oxford, United Kingdom',      'Oxford, Mississippi, United States'], codes: ['gb', 'us'] },
 }
 
+// Returns the resolved city name (auto-selected via country code), the prompt options, or null if not ambiguous
+export function resolveAmbiguousCity(
+  cityName: string,
+  countryCode?: string,
+): { resolved: string } | { options: [string, string] } | null {
+  const entry = AMBIGUOUS_CITIES[cityName.toLowerCase().trim()]
+  if (!entry) return null
+
+  if (countryCode) {
+    const idx = entry.codes.indexOf(countryCode.toLowerCase())
+    if (idx >= 0) return { resolved: entry.options[idx] }
+  }
+
+  return { options: entry.options }
+}
+
+// Keep the old export for any callers that just need the options array
 export function getAmbiguousCityOptions(
   cityName: string,
 ): [string, string] | null {
-  return AMBIGUOUS_CITIES[cityName.toLowerCase().trim()] ?? null
+  const entry = AMBIGUOUS_CITIES[cityName.toLowerCase().trim()]
+  return entry?.options ?? null
 }
 
 interface GeoapifyFeature {

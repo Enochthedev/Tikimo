@@ -3,7 +3,7 @@ import { latLngToCell } from '../services/events/aggregator.js'
 import { complete } from '../services/ai/client.js'
 import { formatEventCard } from '../services/ai/formatter.js'
 import { getCachedCard, setCachedCard } from '../services/cache/cardCache.js'
-import { forwardGeocode, reverseGeocode, getAmbiguousCityOptions } from '../services/location/geocoder.js'
+import { forwardGeocode, reverseGeocode, resolveAmbiguousCity } from '../services/location/geocoder.js'
 import { getContext, updateContext } from '../services/cache/contextCache.js'
 import type { ConversationContext } from '../services/cache/contextCache.js'
 import { logger } from '../utils/logger.js'
@@ -196,18 +196,21 @@ async function handleCitySearch(
   biasCountry?: string,
   keyword?: string,
 ): Promise<OutboundResponse> {
-  if (!biasCountry) {
-    const options = getAmbiguousCityOptions(cityName)
-    if (options) {
+  const ambiguous = resolveAmbiguousCity(cityName, biasCountry)
+  if (ambiguous) {
+    if ('options' in ambiguous) {
+      // Country code unknown or didn't match — ask the user
       return {
         type: 'message',
         text: `Which ${cityName} do you mean?`,
         actions: [
-          { label: options[0], id: 'find_events_in_city', payload: options[0] },
-          { label: options[1], id: 'find_events_in_city', payload: options[1] },
+          { label: ambiguous.options[0], id: 'find_events_in_city', payload: ambiguous.options[0] },
+          { label: ambiguous.options[1], id: 'find_events_in_city', payload: ambiguous.options[1] },
         ],
       }
     }
+    // Country code matched — use the resolved full name (e.g. "Lagos, Nigeria")
+    cityName = ambiguous.resolved
   }
 
   const geo = await forwardGeocode(cityName, biasCountry)

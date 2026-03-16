@@ -28,7 +28,7 @@ Intents:
 - "life_of_party" — user wants the most hyped/going-off event (e.g., "what's going to bang", "what's lit tonight", "life of the party", "I'm in a party mood", "feeling like going out and vibing", "where's the energy tonight", "take me somewhere hype")
 - "unknown" — anything else
 
-Extract "city" if a location is mentioned.
+Extract "city" if a location is mentioned. If the user includes a country name alongside the city (e.g. "Lagos Nigeria", "London UK", "Cape Town South Africa"), include it as "City, Country" (e.g. "Lagos, Nigeria").
 Extract "category" if an event type is mentioned (music, comedy, sports, food, art, nightlife, etc).
 Extract "artist" if a performer, artist, or act name is mentioned (e.g. "Davido", "Burna Boy", "Coldplay").
 Extract "venueName" if a specific venue or stadium is mentioned (e.g. "O2 Arena", "Wembley", "Madison Square Garden").
@@ -36,6 +36,15 @@ Extract "venueName" if a specific venue or stadium is mentioned (e.g. "O2 Arena"
 Examples:
 User: "any good concerts in Lagos this weekend?"
 {"intent":"find_events_in_city","city":"Lagos","category":"music"}
+
+User: "I meant Lagos Nigeria"
+{"intent":"change_city","city":"Lagos, Nigeria"}
+
+User: "events in Lagos Nigeria"
+{"intent":"find_events_in_city","city":"Lagos, Nigeria"}
+
+User: "parties in Abuja Nigeria"
+{"intent":"find_events_in_city","city":"Abuja, Nigeria","category":"nightlife"}
 
 User: "what's happening near me"
 {"intent":"find_events"}
