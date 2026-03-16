@@ -1,3 +1,4 @@
+import { randomUUID } from 'node:crypto'
 import { complete } from '@/services/ai/client.js'
 import { writeIntentLog } from '@/services/warehouse/writer.js'
 import { logger } from '@/utils/logger.js'
@@ -22,7 +23,7 @@ Intents:
 - "lucky" — feeling lucky, surprise me, random
 - "map" — show map, open map
 - "browse" — browse, explore categories
-- "life_of_party" — user wants the most hyped/going-off event (e.g., "what's going to bang", "what's lit tonight", "life of the party")
+- "life_of_party" — user wants the most hyped/going-off event (e.g., "what's going to bang", "what's lit tonight", "life of the party", "I'm in a party mood", "feeling like going out and vibing", "where's the energy tonight", "take me somewhere hype")
 - "unknown" — anything else
 
 Extract "city" if a location is mentioned.
@@ -47,6 +48,12 @@ User: "surprise me"
 User: "what's popping tonight"
 {"intent":"life_of_party"}
 
+User: "I'm in more of a party mood"
+{"intent":"life_of_party"}
+
+User: "feeling like going out tonight"
+{"intent":"life_of_party"}
+
 User: "are there any comedy shows?"
 {"intent":"find_events","category":"comedy"}
 
@@ -60,31 +67,56 @@ Now classify this message:`
 
 export async function parseIntent(
   text: string,
-  context?: { userId?: string; platform?: string },
-): Promise<ParsedIntent> {
+  context?: { userId?: string; platform?: string; intentId?: string },
+): Promise<ParsedIntent & { intentId: string }> {
   let result: ParsedIntent
   let model = 'gemini-flash'
+  const intentId = context?.intentId ?? randomUUID()
 
   try {
     const raw = await complete(`${INTENT_PROMPT}\n\nUser: "${text}"`, 'cheap')
 
     const jsonMatch = raw.match(/\{[\s\S]*\}/)
     if (!jsonMatch) {
-      logger.warn({ raw }, 'intent parse: no JSON found')
-      result = fallbackParse(text)
-      model = 'fallback-regex'
+      // Gemini returned no JSON — retry with smarter model before regex fallback
+      logger.warn({ raw }, 'intent parse: no JSON from cheap model, retrying with fast')
+      const retry = await complete(`${INTENT_PROMPT}\n\nUser: "${text}"`, 'fast').catch(() => null)
+      const retryMatch = retry?.match(/\{[\s\S]*\}/)
+      if (retryMatch) {
+        result = JSON.parse(retryMatch[0]) as ParsedIntent
+        result.query = text
+        model = 'claude-haiku-retry'
+      } else {
+        result = fallbackParse(text)
+        model = 'fallback-regex'
+      }
     } else {
       result = JSON.parse(jsonMatch[0]) as ParsedIntent
       result.query = text
     }
   } catch (err) {
-    logger.warn({ err, text }, 'intent parse failed, using fallback')
-    result = fallbackParse(text)
-    model = 'fallback-regex'
+    // Primary model failed — try smarter fallback before regex
+    logger.warn({ err, text }, 'intent parse failed, retrying with fast model')
+    try {
+      const retry = await complete(`${INTENT_PROMPT}\n\nUser: "${text}"`, 'fast')
+      const retryMatch = retry.match(/\{[\s\S]*\}/)
+      if (retryMatch) {
+        result = JSON.parse(retryMatch[0]) as ParsedIntent
+        result.query = text
+        model = 'claude-haiku-retry'
+      } else {
+        result = fallbackParse(text)
+        model = 'fallback-regex'
+      }
+    } catch {
+      result = fallbackParse(text)
+      model = 'fallback-regex'
+    }
   }
 
   // Log to ClickHouse for future ML training — fire and forget
   writeIntentLog({
+    intent_id: intentId,
     user_id: context?.userId ?? 'unknown',
     platform: context?.platform ?? 'unknown',
     message: text,
@@ -96,7 +128,7 @@ export async function parseIntent(
     ts: new Date(),
   })
 
-  return result
+  return { ...result, intentId }
 }
 
 // Regex fallback if AI is down — keeps the bot functional

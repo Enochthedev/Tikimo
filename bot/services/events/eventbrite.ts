@@ -8,6 +8,7 @@ interface EbEvent {
   id: string
   name: { text: string }
   start: { local: string }
+  online_event?: boolean
   venue?: {
     name: string
     address: { city: string; latitude: string; longitude: string }
@@ -49,6 +50,7 @@ export async function searchEventbrite(params: {
 }
 
 function normaliseEbEvent(e: EbEvent): NormalisedEvent | null {
+  if (e.online_event) return null  // skip online-only events
   if (!e.venue?.address?.latitude) return null
 
   const min = e.ticket_availability?.minimum_ticket_price

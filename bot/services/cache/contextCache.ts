@@ -20,6 +20,9 @@ export interface ConversationContext {
   lastCategory?: string
   currentPage: number
 
+  // Intent tracking — used to confirm classifications via downstream behaviour
+  lastIntentId?: string
+
   // Taste signals
   dislikedEventIds?: string[]
   dislikedCategories?: string[]

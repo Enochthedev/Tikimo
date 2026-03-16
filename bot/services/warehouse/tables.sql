@@ -40,6 +40,7 @@ ORDER BY (geo_cell, ts);
 -- Once we have ~10k rows, we can fine-tune a small classifier to replace
 -- the Gemini Flash call entirely (saving ~$0.00007 per message but at scale).
 CREATE TABLE IF NOT EXISTS tiximo.intent_log (
+    intent_id     String,     -- UUID — join key with intent_confirmations
     user_id       String,
     platform      String,
     message       String,
@@ -52,3 +53,28 @@ CREATE TABLE IF NOT EXISTS tiximo.intent_log (
 ) ENGINE = MergeTree()
 PARTITION BY toYYYYMM(ts)
 ORDER BY (intent, ts);
+
+-- Confirmation signals — when downstream behaviour proves the intent was correct.
+-- JOIN with intent_log on intent_id to get verified training samples.
+-- signal: 'see_more' | 'booked' | 'follow_up_category' | 'follow_up_city'
+CREATE TABLE IF NOT EXISTS tiximo.intent_confirmations (
+    intent_id     String,
+    signal        String,
+    ts            DateTime64(3, 'UTC')
+) ENGINE = MergeTree()
+PARTITION BY toYYYYMM(ts)
+ORDER BY (intent_id, ts);
+
+-- Human corrections — ops team can flag misclassified intents and set the true label.
+-- These are gold-standard samples: highest weight in training data.
+-- corrected_by: who made the correction (admin user ID or 'auto-review')
+CREATE TABLE IF NOT EXISTS tiximo.intent_corrections (
+    intent_id         String,
+    original_intent   String,
+    corrected_intent  String,
+    corrected_by      String,
+    note              String,   -- optional free-text reason
+    ts                DateTime64(3, 'UTC')
+) ENGINE = MergeTree()
+PARTITION BY toYYYYMM(ts)
+ORDER BY (intent_id, ts);

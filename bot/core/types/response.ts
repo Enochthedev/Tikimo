@@ -11,6 +11,7 @@ export interface NormalisedEvent {
   url: string
   imageUrl?: string
   category?: string
+  isOnline?: boolean
   aiSummary?: string
   hypeScore?: number
   velocity?: number // rate of hype change — drives blob pulse speed

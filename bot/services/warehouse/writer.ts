@@ -61,6 +61,7 @@ export async function writeSearchEvent(row: SearchEventRow): Promise<void> {
 }
 
 export interface IntentLogRow {
+  intent_id: string
   user_id: string
   platform: string
   message: string
@@ -69,6 +70,12 @@ export interface IntentLogRow {
   category: string
   model: string
   confidence: number
+  ts: Date
+}
+
+export interface IntentConfirmationRow {
+  intent_id: string
+  signal: 'see_more' | 'booked' | 'follow_up_category' | 'follow_up_city'
   ts: Date
 }
 
@@ -82,6 +89,41 @@ export async function writeIntentLog(row: IntentLogRow): Promise<void> {
     })
   } catch (err) {
     logger.warn({ err }, 'clickhouse intent_log write failed')
+  }
+}
+
+export async function writeIntentConfirmation(row: IntentConfirmationRow): Promise<void> {
+  if (!isEnabled()) return
+  try {
+    await clickhouse.insert({
+      table: 'intent_confirmations',
+      values: [row],
+      format: 'JSONEachRow',
+    })
+  } catch (err) {
+    logger.warn({ err }, 'clickhouse intent_confirmation write failed')
+  }
+}
+
+export interface IntentCorrectionRow {
+  intent_id: string
+  original_intent: string
+  corrected_intent: string
+  corrected_by: string
+  note: string
+  ts: Date
+}
+
+export async function writeIntentCorrection(row: IntentCorrectionRow): Promise<void> {
+  if (!isEnabled()) return
+  try {
+    await clickhouse.insert({
+      table: 'intent_corrections',
+      values: [row],
+      format: 'JSONEachRow',
+    })
+  } catch (err) {
+    logger.warn({ err }, 'clickhouse intent_correction write failed')
   }
 }
 

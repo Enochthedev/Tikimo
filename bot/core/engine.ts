@@ -13,6 +13,7 @@ import { handleLifeOfParty, isLifeOfPartyQuery } from './flows/party.js'
 import { handleMapRequest } from './flows/map.js'
 import { handleOnboarding, needsOnboarding } from './flows/onboarding.js'
 import { parseIntent } from './intent.js'
+import { writeIntentConfirmation } from '../services/warehouse/writer.js'
 import type { InboundMessage } from './types/message.js'
 import type { OutboundResponse } from './types/response.js'
 
@@ -64,7 +65,12 @@ export async function processMessage(msg: InboundMessage): Promise<OutboundRespo
   // Action routing (inline keyboard callbacks)
   if (msg.type === 'action') {
     const { id } = msg.action ?? { id: '' }
-    if (id === 'book_event') return handleBooking(msg, user)
+    if (id === 'book_event') {
+      if (ctx?.lastIntentId) {
+        writeIntentConfirmation({ intent_id: ctx.lastIntentId, signal: 'booked', ts: new Date() })
+      }
+      return handleBooking(msg, user)
+    }
     if (id === 'feeling_lucky') {
       if (await isEnabled('FEELING_LUCKY', user)) return handleLucky(msg, user)
     }
@@ -76,6 +82,9 @@ export async function processMessage(msg: InboundMessage): Promise<OutboundRespo
       return handleDislike(msg, user, msg.action!.payload)
     }
     if (id === 'see_more') {
+      if (ctx?.lastIntentId) {
+        writeIntentConfirmation({ intent_id: ctx.lastIntentId, signal: 'see_more', ts: new Date() })
+      }
       return handleSeeMore(msg, user)
     }
     if (id === 'something_different') {
@@ -95,6 +104,8 @@ export async function processMessage(msg: InboundMessage): Promise<OutboundRespo
 
     const intent = await parseIntent(msg.text, { userId: user.id, platform: msg.platform })
     logger.info({ intent: intent.intent, city: intent.city, category: intent.category }, 'parsed intent')
+    // Persist intent ID so downstream actions can confirm it
+    updateContext(msg.platform, msg.userId, { lastIntentId: intent.intentId })
 
     switch (intent.intent) {
       case 'greeting':
@@ -110,7 +121,10 @@ export async function processMessage(msg: InboundMessage): Promise<OutboundRespo
         return handleDiscovery(msg, user)
 
       case 'find_events_in_city': {
-        // Use intent city, or fall back to context's last city
+        // A city follow-up after results confirms the previous intent was understood
+        if (ctx?.lastIntentId && ctx?.lastEventIds?.length) {
+          writeIntentConfirmation({ intent_id: ctx.lastIntentId, signal: 'follow_up_city', ts: new Date() })
+        }
         const city = intent.city ?? ctx?.lastCity
         if (city) {
           return handleCitySearch(msg, user, city, intent.category, ctx?.lastCountry)
@@ -119,6 +133,9 @@ export async function processMessage(msg: InboundMessage): Promise<OutboundRespo
       }
 
       case 'change_city': {
+        if (ctx?.lastIntentId && ctx?.lastEventIds?.length) {
+          writeIntentConfirmation({ intent_id: ctx.lastIntentId, signal: 'follow_up_city', ts: new Date() })
+        }
         const city = intent.city ?? ctx?.lastCity
         if (city) {
           return handleCitySearch(msg, user, city, ctx?.lastCategory, ctx?.lastCountry)
