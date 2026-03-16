@@ -1,13 +1,13 @@
 import { z } from 'zod'
 
 const schema = z.object({
-  // Platforms
+  // Platforms (only Telegram required for now)
   TELEGRAM_BOT_TOKEN: z.string().min(1),
-  WHATSAPP_ACCESS_TOKEN: z.string().min(1),
-  WHATSAPP_PHONE_NUMBER_ID: z.string().min(1),
-  WHATSAPP_VERIFY_TOKEN: z.string().min(1),
-  DISCORD_BOT_TOKEN: z.string().min(1),
-  DISCORD_CLIENT_ID: z.string().min(1),
+  WHATSAPP_ACCESS_TOKEN: z.string().default(''),
+  WHATSAPP_PHONE_NUMBER_ID: z.string().default(''),
+  WHATSAPP_VERIFY_TOKEN: z.string().default(''),
+  DISCORD_BOT_TOKEN: z.string().default(''),
+  DISCORD_CLIENT_ID: z.string().default(''),
 
   // AI
   OPENROUTER_API_KEY: z.string().min(1),

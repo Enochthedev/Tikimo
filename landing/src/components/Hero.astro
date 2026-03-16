@@ -7,16 +7,17 @@
   <!-- Subtle grain overlay -->
   <div class="hero-grain" aria-hidden="true"></div>
 
-  <div class="hero-content">
+  <!-- Sticky viewport stage -->
+  <div class="hero-stage">
     <!-- Scattered decorative dots -->
     <div class="deco deco-1" aria-hidden="true"></div>
     <div class="deco deco-2" aria-hidden="true"></div>
     <div class="deco deco-3" aria-hidden="true"></div>
 
     <div class="hero-title-wrap" id="hero-title">
-      <span class="hero-line" id="hero-tix">TIX</span>
+      <span class="hero-line hero-line--wordmark" id="hero-tix">TIX</span>
 
-      <!-- SVG ticket — replaces emoji -->
+      <!-- SVG ticket — starts below viewport, flies up on scroll -->
       <div class="hero-ticket" id="hero-ticket" aria-hidden="true">
         <svg viewBox="0 0 240 160" fill="none" xmlns="http://www.w3.org/2000/svg">
           <defs>
@@ -42,8 +43,8 @@
           <!-- Perforation -->
           <line x1="168" y1="18" x2="168" y2="142" stroke="rgba(0,0,0,0.15)" stroke-width="1.5" stroke-dasharray="5 4"/>
           <!-- ADMIT ONE -->
-          <text x="80" y="62" text-anchor="middle" font-family="'Chubbo',system-ui,sans-serif" font-size="20" font-weight="900" fill="rgba(0,0,0,0.6)" letter-spacing="4">ADMIT</text>
-          <text x="80" y="92" text-anchor="middle" font-family="'Chubbo',system-ui,sans-serif" font-size="20" font-weight="900" fill="rgba(0,0,0,0.6)" letter-spacing="4">ONE</text>
+          <text x="80" y="62" text-anchor="middle" font-family="'Cabinet Grotesk',system-ui,sans-serif" font-size="20" font-weight="900" fill="rgba(0,0,0,0.6)" letter-spacing="4">ADMIT</text>
+          <text x="80" y="92" text-anchor="middle" font-family="'Cabinet Grotesk',system-ui,sans-serif" font-size="20" font-weight="900" fill="rgba(0,0,0,0.6)" letter-spacing="4">ONE</text>
           <!-- Stars -->
           <text x="80" y="122" text-anchor="middle" font-size="12" fill="rgba(0,0,0,0.25)" letter-spacing="6">&#9733; &#9733; &#9733;</text>
           <!-- Stub number -->
@@ -51,7 +52,7 @@
         </svg>
       </div>
 
-      <span class="hero-line" id="hero-imo">IMO</span>
+      <span class="hero-line hero-line--wordmark" id="hero-imo">IMO</span>
     </div>
 
     <p class="hero-tagline" id="hero-tagline">
@@ -71,23 +72,25 @@
     </div>
 
     <p class="hero-note" id="hero-note">No app download · No account · Just chat</p>
+
+    <!-- Scroll hint at bottom -->
+    <div class="scroll-hint" id="scroll-hint" aria-hidden="true">
+      <div class="scroll-hint-line"></div>
+    </div>
   </div>
 </section>
 
 <style>
+  /* Extra height so scroll trigger has room */
   .hero {
     position: relative;
-    min-height: 100vh;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    overflow: hidden;
+    height: 280vh;
     background: var(--bg);
   }
 
-  /* Three.js canvas */
+  /* Three.js canvas - fixed to viewport while in hero */
   .hero-particles {
-    position: absolute;
+    position: fixed;
     inset: 0;
     width: 100%;
     height: 100%;
@@ -97,7 +100,7 @@
 
   /* Noise grain texture */
   .hero-grain {
-    position: absolute;
+    position: fixed;
     inset: 0;
     z-index: 1;
     pointer-events: none;
@@ -105,6 +108,21 @@
     background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
     background-repeat: repeat;
     background-size: 200px 200px;
+  }
+
+  /* Sticky stage — pins to viewport while user scrolls */
+  .hero-stage {
+    position: sticky;
+    top: 0;
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    padding: 80px 24px;
+    z-index: 2;
+    overflow: hidden;
   }
 
   /* Decorative dots */
@@ -149,17 +167,6 @@
     50% { transform: scale(1.6); opacity: 0.6; }
   }
 
-  /* Content */
-  .hero-content {
-    position: relative;
-    z-index: 2;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    text-align: center;
-    padding: 100px 24px 80px;
-  }
-
   /* Title block */
   .hero-title-wrap {
     position: relative;
@@ -172,7 +179,6 @@
   }
 
   .hero-line {
-    font-family: 'Chubbo', system-ui, sans-serif;
     font-weight: 900;
     font-size: clamp(110px, 22vw, 240px);
     letter-spacing: -6px;
@@ -182,12 +188,17 @@
     will-change: transform;
   }
 
-  /* SVG ticket */
+  /* Pilowlava for the wordmark only */
+  .hero-line--wordmark {
+    font-family: 'Pilowlava', var(--font-display);
+    letter-spacing: -2px;
+  }
+
+  /* SVG ticket — starts far below, scroll drives it up */
   .hero-ticket {
     position: absolute;
     left: 50%;
     top: 50%;
-    transform: translate(-50%, -50%) rotate(-8deg);
     width: clamp(120px, 18vw, 200px);
     z-index: 10;
     filter:
@@ -195,6 +206,9 @@
       drop-shadow(0 2px 8px rgba(255, 69, 0, 0.35));
     will-change: transform;
     pointer-events: none;
+    /* Initial position: off-screen below — GSAP overrides this */
+    transform: translate(-50%, 120vh) rotate(15deg);
+    opacity: 0;
   }
 
   .hero-ticket svg {
@@ -205,7 +219,7 @@
 
   /* Tagline */
   .hero-tagline {
-    font-family: 'Chubbo', system-ui, sans-serif;
+    font-family: var(--font-display);
     font-size: clamp(18px, 2.5vw, 28px);
     font-weight: 300;
     color: var(--muted);
@@ -231,12 +245,33 @@
   }
 
   .hero-note {
-    font-family: system-ui, -apple-system, sans-serif;
+    font-family: var(--font-body);
     font-size: 13px;
     color: var(--muted);
     letter-spacing: 0.8px;
     text-transform: uppercase;
     opacity: 0;
+  }
+
+  /* Scroll hint */
+  .scroll-hint {
+    position: absolute;
+    bottom: 32px;
+    left: 50%;
+    transform: translateX(-50%);
+    opacity: 0;
+  }
+
+  .scroll-hint-line {
+    width: 1px;
+    height: 48px;
+    background: linear-gradient(to bottom, transparent, var(--fire), transparent);
+    animation: scroll-pulse 2s ease-in-out infinite;
+  }
+
+  @keyframes scroll-pulse {
+    0%, 100% { opacity: 0.3; transform: scaleY(0.6); }
+    50% { opacity: 0.8; transform: scaleY(1); }
   }
 
   /* Responsive */
@@ -254,6 +289,9 @@
 <script>
   import * as THREE from 'three'
   import { gsap } from 'gsap'
+  import { ScrollTrigger } from 'gsap/ScrollTrigger'
+
+  gsap.registerPlugin(ScrollTrigger)
 
   // ─── Three.js Ember Particles ──────────────────────────────────────────────
 
@@ -379,63 +417,103 @@
     }, { passive: true })
   }
 
-  // ─── GSAP Load Animation ──────────────────────────────────────────────────
+  // ─── GSAP: Page Load Animation ─────────────────────────────────────────────
 
-  const tl = gsap.timeline({ defaults: { ease: 'back.out(1.4)' } })
+  const loadTl = gsap.timeline({ defaults: { ease: 'back.out(1.4)' } })
 
-  // Title wrapper fades in
-  tl.set('#hero-title', { opacity: 1 })
+  // Show the title wrapper
+  loadTl.set('#hero-title', { opacity: 1 })
 
   // TIX drops from above
-  tl.fromTo('#hero-tix',
+  loadTl.fromTo('#hero-tix',
     { y: -120, opacity: 0 },
     { y: 0, opacity: 1, duration: 0.9 },
     0.15
   )
 
-  // IMO drops from above (staggered)
-  tl.fromTo('#hero-imo',
+  // IMO drops (staggered)
+  loadTl.fromTo('#hero-imo',
     { y: -120, opacity: 0 },
     { y: 0, opacity: 1, duration: 0.9 },
     0.3
   )
 
-  // Ticket pops in from below with rotation
-  tl.fromTo('#hero-ticket',
-    { scale: 0, rotation: 25, opacity: 0 },
-    { scale: 1, rotation: -8, opacity: 1, duration: 1, ease: 'elastic.out(1, 0.6)' },
-    0.5
-  )
-
   // Tagline fades up
-  tl.fromTo('#hero-tagline',
+  loadTl.fromTo('#hero-tagline',
     { y: 24, opacity: 0 },
     { y: 0, opacity: 1, duration: 0.7, ease: 'power2.out' },
-    1.0
+    0.7
   )
 
   // CTA buttons fade up
-  tl.fromTo('#hero-cta',
+  loadTl.fromTo('#hero-cta',
     { y: 20, opacity: 0 },
     { y: 0, opacity: 1, duration: 0.6, ease: 'power2.out' },
-    1.15
+    0.85
   )
 
   // Note fades in
-  tl.fromTo('#hero-note',
+  loadTl.fromTo('#hero-note',
     { opacity: 0 },
     { opacity: 1, duration: 0.5, ease: 'power2.out' },
-    1.3
+    1.0
   )
 
-  // Subtle continuous ticket float
-  gsap.to('#hero-ticket', {
-    y: -6,
-    rotation: -10,
-    duration: 3,
-    ease: 'sine.inOut',
-    yoyo: true,
-    repeat: -1,
-    delay: 2,
+  // Scroll hint fades in
+  loadTl.fromTo('#scroll-hint',
+    { opacity: 0 },
+    { opacity: 1, duration: 0.6, ease: 'power2.out' },
+    1.1
+  )
+
+  // ─── GSAP: Scroll-Driven Ticket Rise ───────────────────────────────────────
+  // Ticket starts far below the viewport and flies up as user scrolls,
+  // landing centered over the TIXIMO wordmark.
+
+  const scrollTl = gsap.timeline({
+    scrollTrigger: {
+      trigger: '#hero',
+      start: 'top top',
+      end: 'bottom bottom',
+      scrub: 1,
+    },
+  })
+
+  // Phase 1 (0–60%): Ticket rises from below, rotating
+  scrollTl.fromTo('#hero-ticket',
+    { y: '100vh', rotation: 18, scale: 0.5, opacity: 0 },
+    { y: '0vh', rotation: -4, scale: 1.05, opacity: 1, ease: 'power2.out' },
+    0
+  )
+
+  // Phase 2 (60–80%): Ticket eases into final position with a subtle settle
+  scrollTl.to('#hero-ticket', {
+    y: '-5vh',
+    rotation: -8,
+    scale: 1,
+    ease: 'power1.inOut',
+  }, 0.6)
+
+  // Phase 3 (80–100%): Fade out scroll hint
+  scrollTl.to('#scroll-hint', {
+    opacity: 0,
+    duration: 0.2,
+  }, 0.2)
+
+  // After scroll completes, gentle floating
+  ScrollTrigger.create({
+    trigger: '#hero',
+    start: 'bottom bottom',
+    onEnterBack: () => gsap.killTweensOf('#hero-ticket', 'y,rotation'),
+    onLeave: () => {
+      gsap.to('#hero-ticket', {
+        y: '-5vh',
+        rotation: -10,
+        duration: 3,
+        ease: 'sine.inOut',
+        yoyo: true,
+        repeat: -1,
+      })
+    },
   })
 </script>

@@ -1,5 +1,5 @@
 import { createServer } from 'node:http'
-import { readFileSync } from 'node:fs'
+import { existsSync, readFileSync } from 'node:fs'
 import { join, dirname } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { serve } from '@hono/node-server'
@@ -11,7 +11,18 @@ import { env } from '../config/env.js'
 import { logger } from '../utils/logger.js'
 
 const __dirname = dirname(fileURLToPath(import.meta.url))
-const landingHtml = readFileSync(join(__dirname, '../../landing/index.html'), 'utf-8')
+
+// Try multiple paths — build output varies between local dev and Railway
+const landingPaths = [
+  join(__dirname, '../../landing/dist/index.html'),
+  join(__dirname, '../../landing/index.html'),
+  join(process.cwd(), 'landing/dist/index.html'),
+  join(process.cwd(), 'landing/index.html'),
+]
+const landingFile = landingPaths.find((p) => existsSync(p))
+const landingHtml = landingFile
+  ? readFileSync(landingFile, 'utf-8')
+  : '<html><body><h1>Tiximo</h1><p>Landing page not built yet.</p></body></html>'
 import discordRouter from './routes/discord.js'
 import { handleMapWebSocket, mapRouter } from './routes/map.js'
 import telegramRouter from './routes/telegram.js'
