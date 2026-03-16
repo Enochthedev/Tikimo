@@ -5,7 +5,15 @@
 import { readFileSync } from 'node:fs'
 import { join, dirname } from 'node:path'
 import { fileURLToPath } from 'node:url'
-import { clickhouse } from '../services/warehouse/clickhouse.js'
+import { createClient } from '@clickhouse/client'
+import { env } from '../config/env.js'
+
+// Use a client WITHOUT a database set — so we can run CREATE DATABASE first
+const clickhouse = createClient({
+  url: env.CLICKHOUSE_HOST,
+  username: env.CLICKHOUSE_USER,
+  password: env.CLICKHOUSE_PASSWORD,
+})
 
 const __dirname = dirname(fileURLToPath(import.meta.url))
 
