@@ -29,7 +29,7 @@ export const FLAGS = {
   POST_EVENT_RATINGS: false,
 
   // Data pipeline
-  WAREHOUSE_STREAMING: false, // stream to ClickHouse
+  WAREHOUSE_STREAMING: true,  // stream to ClickHouse
   NIGHTLY_EXPORT: false,      // export to R2
 
   // NLP + conversation

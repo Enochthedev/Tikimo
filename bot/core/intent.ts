@@ -1,4 +1,5 @@
 import { complete } from '@/services/ai/client.js'
+import { writeIntentLog } from '@/services/warehouse/writer.js'
 import { logger } from '@/utils/logger.js'
 
 export interface ParsedIntent {
@@ -57,24 +58,45 @@ User: "actually check Lagos"
 
 Now classify this message:`
 
-export async function parseIntent(text: string): Promise<ParsedIntent> {
+export async function parseIntent(
+  text: string,
+  context?: { userId?: string; platform?: string },
+): Promise<ParsedIntent> {
+  let result: ParsedIntent
+  let model = 'gemini-flash'
+
   try {
     const raw = await complete(`${INTENT_PROMPT}\n\nUser: "${text}"`, 'cheap')
 
-    // Extract JSON from response (handle potential markdown wrapping)
     const jsonMatch = raw.match(/\{[\s\S]*\}/)
     if (!jsonMatch) {
       logger.warn({ raw }, 'intent parse: no JSON found')
-      return fallbackParse(text)
+      result = fallbackParse(text)
+      model = 'fallback-regex'
+    } else {
+      result = JSON.parse(jsonMatch[0]) as ParsedIntent
+      result.query = text
     }
-
-    const parsed = JSON.parse(jsonMatch[0]) as ParsedIntent
-    parsed.query = text
-    return parsed
   } catch (err) {
     logger.warn({ err, text }, 'intent parse failed, using fallback')
-    return fallbackParse(text)
+    result = fallbackParse(text)
+    model = 'fallback-regex'
   }
+
+  // Log to ClickHouse for future ML training — fire and forget
+  writeIntentLog({
+    user_id: context?.userId ?? 'unknown',
+    platform: context?.platform ?? 'unknown',
+    message: text,
+    intent: result.intent,
+    city: result.city ?? '',
+    category: result.category ?? '',
+    model,
+    confidence: model === 'fallback-regex' ? 0.5 : 1.0,
+    ts: new Date(),
+  })
+
+  return result
 }
 
 // Regex fallback if AI is down — keeps the bot functional

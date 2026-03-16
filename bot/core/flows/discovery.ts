@@ -4,7 +4,7 @@ import { getCachedCard, setCachedCard } from '@/services/cache/cardCache.js'
 import { updateContext } from '@/services/cache/contextCache.js'
 import { getEvents } from '@/services/events/aggregator.js'
 import { latLngToCell } from '@/services/events/aggregator.js'
-import { recordViewed, recordZeroResults } from '@/services/tracking/interactions.js'
+import { recordViewed, recordZeroResults, recordSearch } from '@/services/tracking/interactions.js'
 import { logger } from '@/utils/logger.js'
 import type { InboundMessage } from '../types/message.js'
 import type { NormalisedEvent, OutboundResponse } from '../types/response.js'
@@ -68,7 +68,18 @@ export async function handleDiscovery(
   }
 
   const enriched = await enrichEvents(events, msg.platform)
-  await recordViewed(user.id, enriched, geoCell)
+  await recordViewed(user.id, enriched, geoCell, msg.platform)
+
+  // Stream search analytics to ClickHouse (fire and forget)
+  recordSearch({
+    userId: user.id,
+    platform: msg.platform,
+    city: options?.cityLabel ?? '',
+    geoCell,
+    radiusKm: usedRadius,
+    resultCount: enriched.length,
+    fromCache,
+  })
 
   await updateContext(msg.platform, msg.userId, {
     lastEventIds: enriched.map((e) => e.id),

@@ -27,8 +27,13 @@ import discordRouter from './routes/discord.js'
 import { handleMapWebSocket, mapRouter } from './routes/map.js'
 import telegramRouter from './routes/telegram.js'
 import whatsappRouter from './routes/whatsapp.js'
+import { telegramBot } from '../adapters/telegram/index.js'
 
 Sentry.init({ dsn: process.env.SENTRY_DSN, environment: env.NODE_ENV })
+
+// Initialize Grammy bot before any webhook requests arrive
+await telegramBot.init()
+logger.info('telegram bot initialized')
 
 const app = new Hono()
 

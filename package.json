@@ -9,6 +9,8 @@
     "db:generate": "drizzle-kit generate",
     "db:migrate": "drizzle-kit migrate",
     "db:push": "drizzle-kit push",
+    "db:migrate:clickhouse": "tsx bot/scripts/migrate-clickhouse.ts",
+    "migrate:all": "pnpm db:migrate && pnpm db:migrate:clickhouse",
     "lint": "biome check .",
     "format": "biome format --write .",
     "test": "vitest run",

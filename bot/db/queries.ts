@@ -1,6 +1,7 @@
 import { and, eq, sql } from 'drizzle-orm'
 import type { Platform } from '../core/types/message.js'
 import type { User } from '../core/types/user.js'
+import { writeInteraction } from '../services/warehouse/writer.js'
 import { db } from './index.js'
 import { eventInteractions, geoCacheLog, ghostZoneSignals, users } from './schema.js'
 
@@ -39,9 +40,21 @@ export async function trackInteraction(params: {
   eventId: string
   provider: string
   geoCell: string
-  action: 'viewed' | 'clicked' | 'booked'
+  action: 'viewed' | 'clicked' | 'booked' | 'disliked'
+  platform?: Platform
 }): Promise<void> {
   await db.insert(eventInteractions).values(params)
+
+  // Stream to ClickHouse in background — fire and forget
+  writeInteraction({
+    user_id: params.userId,
+    event_id: params.eventId,
+    provider: params.provider,
+    geo_cell: params.geoCell,
+    action: params.action,
+    platform: params.platform ?? 'telegram',
+    ts: new Date(),
+  })
 }
 
 export async function upsertGhostZone(geoCell: string, category?: string): Promise<void> {

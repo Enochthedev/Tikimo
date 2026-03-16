@@ -3,8 +3,8 @@ builder = "nixpacks"
 buildCommand = "pnpm build"
 
 [deploy]
-releaseCommand = "pnpm drizzle-kit migrate"
-startCommand = "pnpm drizzle-kit migrate && pnpm start"
+releaseCommand = "pnpm migrate:all"
+startCommand = "pnpm migrate:all && pnpm start"
 healthcheckPath = "/health"
 healthcheckTimeout = 60
 restartPolicyType = "on_failure"

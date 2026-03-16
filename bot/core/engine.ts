@@ -48,7 +48,7 @@ export async function processMessage(msg: InboundMessage): Promise<OutboundRespo
   // Onboarding gate — bypass for city-based searches
   if (needsOnboarding(user) && msg.type !== 'location') {
     if (msg.type === 'text' && msg.text) {
-      const intent = await parseIntent(msg.text)
+      const intent = await parseIntent(msg.text, { userId: user.id, platform: msg.platform })
       if (intent.intent === 'find_events_in_city' && intent.city) {
         return handleCitySearch(msg, user, intent.city, intent.category, ctx?.lastCountry)
       }
@@ -93,12 +93,12 @@ export async function processMessage(msg: InboundMessage): Promise<OutboundRespo
       return handleLifeOfParty(msg, user)
     }
 
-    const intent = await parseIntent(msg.text)
+    const intent = await parseIntent(msg.text, { userId: user.id, platform: msg.platform })
     logger.info({ intent: intent.intent, city: intent.city, category: intent.category }, 'parsed intent')
 
     switch (intent.intent) {
       case 'greeting':
-        return handleOnboarding(msg, user)
+        return handleGreeting(msg, user, ctx?.lastCity)
 
       case 'help':
         return {
@@ -269,6 +269,39 @@ async function handleSomethingDifferent(
     return { ...response, text: "Here's a different batch 🔀" }
   }
   return response
+}
+
+async function handleGreeting(
+  msg: InboundMessage,
+  user: { id: string; lastLat?: number; lastLng?: number },
+  _lastSearchedCity?: string, // intentionally ignored — use GPS city, not last searched
+): Promise<OutboundResponse> {
+  if (user.lastLat && user.lastLng) {
+    // Reverse geocode their actual saved location — not the last city they searched
+    const geo = await reverseGeocode(user.lastLat, user.lastLng)
+    const where = geo?.city ? `in ${geo.city}` : 'near you'
+
+    try {
+      const reply = await complete(
+        `The user just said hi. You're Tiximo, a warm event discovery bot. They've used you before — their location is ${where}. Give a short friendly greeting (1 sentence) and offer to find events. Be casual, not robotic.`,
+        'cheap',
+      )
+      return {
+        type: 'message',
+        text: reply,
+        actions: [{ label: `🔍 Events ${where}`, id: 'find_events', payload: '' }],
+      }
+    } catch {
+      return {
+        type: 'message',
+        text: `Hey! Good to see you 👋 Want me to find events ${where}?`,
+        actions: [{ label: `🔍 Events ${where}`, id: 'find_events', payload: '' }],
+      }
+    }
+  }
+
+  // New user — standard onboarding
+  return handleOnboarding(msg, user as Parameters<typeof handleOnboarding>[1])
 }
 
 async function handleUnknown(text: string, lastCity?: string): Promise<OutboundResponse> {
