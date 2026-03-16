@@ -27,8 +27,14 @@ export async function getEvents(params: {
   const cached = await getGeoCachedEvents(geoCell, radiusKm, category)
   if (cached) {
     await incrementCacheHit(geoCell, radiusKm, category)
-    logger.debug({ geoCell, radiusKm }, 'geo cache hit')
-    return { events: cached, geoCell, fromCache: true }
+    // Re-filter cached events — some may have started since they were cached
+    const now = new Date()
+    const stillFuture = cached.filter((e) => {
+      const d = new Date(e.date)
+      return !isNaN(d.getTime()) && d > now
+    })
+    logger.debug({ geoCell, radiusKm, total: cached.length, stillFuture: stillFuture.length }, 'geo cache hit')
+    return { events: stillFuture, geoCell, fromCache: true }
   }
 
   logger.debug({ geoCell, radiusKm }, 'geo cache miss — fetching APIs')
