@@ -38,6 +38,16 @@ const schema = z.object({
   UPSTASH_REDIS_URL: z.string().url(),
   UPSTASH_REDIS_TOKEN: z.string().min(1),
 
+  // Heatmap augmentation
+  PREDICTHQ_API_KEY: z.string().default(''),
+  SONGKICK_API_KEY: z.string().default(''),
+  BANDSINTOWN_APP_ID: z.string().default(''),
+  HEATMAP_AUGMENTATION: z
+    .enum(['true', 'false'])
+    .default('true')
+    .transform((v) => v === 'true'),
+  HEATMAP_AUGMENTATION_THRESHOLD: z.coerce.number().default(100),
+
   // App
   APP_URL: z.string().url(),
   WEBHOOK_SECRET: z.string().min(1),

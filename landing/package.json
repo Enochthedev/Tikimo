@@ -9,9 +9,11 @@
   },
   "dependencies": {
     "astro": "^5.5.5",
-    "gsap": "^3.12.7"
+    "gsap": "^3.12.7",
+    "three": "^0.183.2"
   },
   "devDependencies": {
+    "@types/three": "^0.183.1",
     "typescript": "^5.8.2"
   }
 }

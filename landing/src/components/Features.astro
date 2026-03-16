@@ -1,36 +1,4 @@
 ---
-const features = [
-  {
-    icon: '📍',
-    title: 'Geo-smart search',
-    body: 'Results from Ticketmaster + Eventbrite, filtered to your exact location.',
-  },
-  {
-    icon: '👾',
-    title: 'AI that sounds human',
-    body: 'Tiximo writes every pitch itself. No copy-paste descriptions.',
-  },
-  {
-    icon: '🎟',
-    title: 'One tap to book',
-    body: 'Deep link to checkout. No new accounts.',
-  },
-  {
-    icon: '🔥',
-    title: 'Live hype map',
-    body: 'See what\'s heating up in real time.',
-  },
-  {
-    icon: '🍀',
-    title: 'Feeling Lucky',
-    body: 'Can\'t decide? Tiximo picks one and stands behind it.',
-  },
-  {
-    icon: '📡',
-    title: 'Telegram & WhatsApp',
-    body: 'Works wherever you already are.',
-  },
-]
 ---
 
 <!-- Wave into features section -->
@@ -48,13 +16,53 @@ const features = [
     </div>
 
     <div class="features-grid">
-      {features.map((f, i) => (
-        <div class="feature-card" data-feature style={`--delay: ${i * 0.1}s`}>
-          <div class="feature-icon">{f.icon}</div>
-          <h3 class="feature-title">{f.title}</h3>
-          <p class="feature-body">{f.body}</p>
+      <div class="feature-card" data-feature>
+        <div class="feature-icon">
+          <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z"/><circle cx="12" cy="10" r="3"/></svg>
         </div>
-      ))}
+        <h3 class="feature-title">Geo-smart search</h3>
+        <p class="feature-body">Results from Ticketmaster + Eventbrite, filtered to your exact location.</p>
+      </div>
+
+      <div class="feature-card" data-feature>
+        <div class="feature-icon">
+          <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2a4 4 0 014 4c0 1.95-1.4 3.59-3.25 3.93L12 22l-.75-12.07A4.001 4.001 0 0112 2z"/><path d="M8.5 8.5L4 12l4.5 3.5"/><path d="M15.5 8.5L20 12l-4.5 3.5"/></svg>
+        </div>
+        <h3 class="feature-title">AI that sounds human</h3>
+        <p class="feature-body">Tiximo writes every pitch itself. No copy-paste descriptions.</p>
+      </div>
+
+      <div class="feature-card" data-feature>
+        <div class="feature-icon">
+          <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="4" width="20" height="16" rx="3"/><path d="M2 10h20"/><circle cx="15" cy="4" r="2" fill="var(--bg)" stroke="var(--bg)"/><circle cx="15" cy="20" r="2" fill="var(--bg)" stroke="var(--bg)"/><line x1="15" y1="6" x2="15" y2="18" stroke-dasharray="3 2" opacity="0.5"/></svg>
+        </div>
+        <h3 class="feature-title">One tap to book</h3>
+        <p class="feature-body">Deep link to checkout. No new accounts.</p>
+      </div>
+
+      <div class="feature-card" data-feature>
+        <div class="feature-icon">
+          <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2c1.5 2.5 3 5.5 3 8a3 3 0 01-6 0c0-2.5 1.5-5.5 3-8z"/><path d="M8 16c-2.5 1-4 2.5-4 4h16c0-1.5-1.5-3-4-4"/><path d="M12 12v4"/></svg>
+        </div>
+        <h3 class="feature-title">Live hype map</h3>
+        <p class="feature-body">See what's heating up in real time.</p>
+      </div>
+
+      <div class="feature-card" data-feature>
+        <div class="feature-icon">
+          <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="3"/><circle cx="8.5" cy="8.5" r="1.5"/><circle cx="15.5" cy="8.5" r="1.5"/><circle cx="8.5" cy="15.5" r="1.5"/><circle cx="15.5" cy="15.5" r="1.5"/><circle cx="12" cy="12" r="1.5"/></svg>
+        </div>
+        <h3 class="feature-title">Feeling Lucky</h3>
+        <p class="feature-body">Can't decide? Tiximo picks one and stands behind it.</p>
+      </div>
+
+      <div class="feature-card" data-feature>
+        <div class="feature-icon">
+          <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/><line x1="9" y1="10" x2="15" y2="10"/></svg>
+        </div>
+        <h3 class="feature-title">Telegram &amp; WhatsApp</h3>
+        <p class="feature-body">Works wherever you already are.</p>
+      </div>
     </div>
   </div>
 </section>
@@ -112,13 +120,20 @@ const features = [
   }
 
   .feature-icon {
-    font-size: 32px;
-    margin-bottom: 14px;
-    line-height: 1;
+    width: 48px;
+    height: 48px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(255, 69, 0, 0.1);
+    border: 1px solid rgba(255, 69, 0, 0.2);
+    border-radius: 12px;
+    color: var(--fire);
+    margin-bottom: 16px;
   }
 
   .feature-title {
-    font-family: 'Chubbo', system-ui, sans-serif;
+    font-family: var(--font-display);
     font-size: 18px;
     font-weight: 700;
     color: var(--text);

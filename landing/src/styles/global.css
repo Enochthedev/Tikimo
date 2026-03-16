@@ -46,6 +46,10 @@
   --text: #F5F0E8;
   --muted: #666;
   --radius: 20px;
+
+  /* Font stacks */
+  --font-display: 'Chubbo', system-ui, sans-serif;
+  --font-body: system-ui, -apple-system, 'Segoe UI', sans-serif;
 }
 
 /* ─── Base ─────────────────────────────────────────────────────────────────── */
@@ -59,10 +63,11 @@ html {
 body {
   background: var(--bg);
   color: var(--text);
-  font-family: 'Chubbo', system-ui, sans-serif;
+  font-family: var(--font-body);
   overflow-x: hidden;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  line-height: 1.6;
 }
 
 /* ─── Layout ───────────────────────────────────────────────────────────────── */
@@ -73,12 +78,13 @@ body {
   padding: 0 24px;
 }
 
-/* ─── Typography Utilities ─────────────────────────────────────────────────── */
+/* ─── Typography ──────────────────────────────────────────────────────────── */
 
 .section-eyebrow {
   display: inline-block;
+  font-family: var(--font-body);
   font-size: 12px;
-  font-weight: 700;
+  font-weight: 600;
   letter-spacing: 3px;
   text-transform: uppercase;
   color: var(--fire);
@@ -86,7 +92,7 @@ body {
 }
 
 .section-title {
-  font-family: 'Chubbo', system-ui, sans-serif;
+  font-family: var(--font-display);
   font-size: clamp(32px, 6vw, 56px);
   font-weight: 800;
   letter-spacing: -1.5px;
@@ -101,7 +107,7 @@ body {
   gap: 8px;
   padding: 14px 28px;
   border-radius: 100px;
-  font-family: 'Chubbo', system-ui, sans-serif;
+  font-family: var(--font-display);
   font-size: 16px;
   font-weight: 700;
   text-decoration: none;
@@ -171,4 +177,11 @@ body {
 
 ::-webkit-scrollbar-thumb:hover {
   background: var(--muted);
+}
+
+/* ─── Selection ────────────────────────────────────────────────────────────── */
+
+::selection {
+  background: rgba(255, 69, 0, 0.3);
+  color: var(--text);
 }

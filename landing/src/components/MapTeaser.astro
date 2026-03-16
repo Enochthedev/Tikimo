@@ -5,7 +5,7 @@
     <div class="map-card" data-map-card>
       <div class="canvas-wrap">
         <canvas id="map-canvas" width="900" height="380"></canvas>
-        <div class="map-badge">🔴 Live tonight</div>
+        <div class="map-badge"><span class="live-dot"></span> Live tonight</div>
       </div>
 
       <div class="map-info">
@@ -13,7 +13,7 @@
         <p class="map-body">
           See which parts of the city are heating up. Ghost zones show where demand exists but nothing's been booked yet. Telegram users get the full live version.
         </p>
-        <a href="https://t.me/tiximo_bot" class="btn btn-fire">✈️ Try it</a>
+        <a href="https://t.me/tiximo_bot" class="btn btn-fire">Try it</a>
       </div>
     </div>
   </div>
@@ -62,6 +62,23 @@
     font-weight: 700;
     color: var(--text);
     backdrop-filter: blur(8px);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .live-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: var(--fire);
+    box-shadow: 0 0 8px var(--fire);
+    animation: blink-dot 1.5s ease-in-out infinite;
+  }
+
+  @keyframes blink-dot {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.3; }
   }
 
   .map-info {

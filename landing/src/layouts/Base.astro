@@ -1,4 +1,6 @@
 ---
+import '../styles/global.css'
+
 export interface Props {
   title?: string
   description?: string
@@ -17,7 +19,6 @@ const {
   <meta name="description" content={description} />
   <meta property="og:title" content={title} />
   <meta property="og:description" content={description} />
-  <link rel="stylesheet" href="/styles/global.css" />
 </head>
 <body>
   <slot />
