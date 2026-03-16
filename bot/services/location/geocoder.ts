@@ -2,7 +2,15 @@ import ky from 'ky'
 import { env } from '@/config/env.js'
 
 interface GeoapifyFeature {
-  properties: { city?: string; country?: string; lat: number; lon: number }
+  properties: {
+    city?: string
+    name?: string
+    formatted?: string
+    country?: string
+    lat: number
+    lon: number
+    result_type?: string
+  }
 }
 
 export async function reverseGeocode(
@@ -31,17 +39,30 @@ export async function forwardGeocode(
   try {
     const data = await ky
       .get('https://api.geoapify.com/v1/geocode/search', {
-        searchParams: { text: cityName, type: 'city', limit: 1, apiKey: env.GEOAPIFY_API_KEY },
+        searchParams: {
+          text: cityName,
+          lang: 'en',
+          limit: 5,
+          apiKey: env.GEOAPIFY_API_KEY,
+        },
         timeout: 5_000,
       })
       .json<{ features: GeoapifyFeature[] }>()
 
-    const props = data.features[0]?.properties
+    // Prefer results that are cities/localities, pick the best match
+    const features = data.features ?? []
+    const cityResult =
+      features.find((f) => f.properties.result_type === 'city') ??
+      features.find((f) => f.properties.result_type === 'locality') ??
+      features[0]
+
+    const props = cityResult?.properties
     if (!props) return null
+
     return {
       lat: props.lat,
       lng: props.lon,
-      city: props.city ?? cityName,
+      city: props.city ?? props.name ?? cityName,
       country: props.country ?? 'Unknown',
     }
   } catch {

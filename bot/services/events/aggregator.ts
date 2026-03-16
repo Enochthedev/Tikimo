@@ -38,8 +38,12 @@ export async function getEvents(params: {
     ...(ebEvents.status === 'fulfilled' ? ebEvents.value : []),
   ]
 
+  // Filter out past events (safety net — APIs should already do this)
+  const today = new Date().toISOString().slice(0, 10)
+  const future = events.filter((e) => e.date.slice(0, 10) >= today)
+
   // Dedupe by proximity + name similarity (simple: just by id)
-  const deduped = Array.from(new Map(events.map((e) => [e.id, e])).values())
+  const deduped = Array.from(new Map(future.map((e) => [e.id, e])).values())
 
   // Sort by date
   deduped.sort((a, b) => a.date.localeCompare(b.date))

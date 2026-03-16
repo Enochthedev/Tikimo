@@ -4,22 +4,27 @@ import { complete } from './client.js'
 
 export async function formatEventCard(event: NormalisedEvent, platform: Platform): Promise<string> {
   const platformHints: Record<Platform, string> = {
-    telegram: 'Telegram chat — use MarkdownV2, bold headings, emoji. Keep under 200 chars.',
-    whatsapp: 'WhatsApp — use *bold*, no markdown. Keep under 160 chars.',
-    discord: 'Discord — use **bold**, keep under 200 chars.',
+    telegram: 'Plain text only. Use emoji sparingly. Keep under 140 chars.',
+    whatsapp: 'Plain text only. Keep under 140 chars.',
+    discord: 'Plain text only. Keep under 140 chars.',
   }
 
   const prompt = `
-Write a 1–2 sentence pitch for this event. Be specific about what makes it worth going to. Sound genuinely excited, not salesy. Platform: ${platformHints[platform]}
+Write a 1-sentence pitch for this event. Be specific — mention one concrete detail that makes it worth going. ${platformHints[platform]}
 
-Event:
-- Name: ${event.name}
-- Date: ${event.date}
-- Venue: ${event.venue}, ${event.city}
-- Price: ${event.priceRange ?? 'Check site'}
-- Category: ${event.category ?? 'Event'}
+RULES:
+- Do NOT use markdown (no *, **, _, \` or \\)
+- Do NOT use the phrase "hits different"
+- Do NOT start with the event name (the user already sees it)
+- Sound like a friend giving a genuine tip, not an ad
+- Vary your style — don't repeat patterns across events
 
-Return only the pitch text. No preamble, no JSON.
+Event: ${event.name}
+Date: ${event.date}
+Venue: ${event.venue}, ${event.city}
+Category: ${event.category ?? 'General'}
+
+Return only the pitch. No quotes, no preamble.
 `.trim()
 
   return complete(prompt, 'fast')

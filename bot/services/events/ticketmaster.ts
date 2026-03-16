@@ -29,6 +29,10 @@ export async function searchTicketmaster(params: {
 }): Promise<NormalisedEvent[]> {
   const { lat, lng, radiusKm, category } = params
 
+  // Only fetch future events — ISO 8601 format required by TM API
+  const now = new Date()
+  const startDateTime = now.toISOString().replace(/\.\d{3}Z$/, 'Z')
+
   const query: Record<string, string> = {
     apikey: env.TICKETMASTER_API_KEY,
     latlong: `${lat},${lng}`,
@@ -36,6 +40,7 @@ export async function searchTicketmaster(params: {
     unit: 'miles',
     size: '20',
     sort: 'date,asc',
+    startDateTime,
   }
 
   if (category) query.classificationName = category
