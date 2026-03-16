@@ -20,7 +20,6 @@ landing/dist/
 !.env.example
 
 # ── Database ──────────────────────────────────────────────────────────────────
-drizzle/
 *.db
 *.sqlite
 *.sqlite-journal
