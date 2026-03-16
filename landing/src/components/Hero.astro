@@ -1,0 +1,161 @@
+---
+---
+<section class="hero">
+  <!-- Radial glow background -->
+  <div class="hero-glow" aria-hidden="true"></div>
+
+  <div class="hero-content container">
+    <div class="hero-title-wrap">
+      <span class="hero-line">TIX</span>
+      <!-- swap 🎟️ for <img src='/mascot.png'> when asset is ready -->
+      <div class="mascot" id="hero-mascot" aria-hidden="true">🎟️</div>
+      <span class="hero-line">IMO</span>
+    </div>
+
+    <p class="hero-tagline" id="hero-tagline">
+      Tell me where you are.<br />
+      <em>I'll find you something good.</em>
+    </p>
+
+    <div class="hero-cta-row" id="hero-cta">
+      <a href="https://t.me/tiximo_bot" class="btn btn-fire">✈️ Open in Telegram</a>
+      <a href="https://wa.me/tiximo" class="btn btn-ghost">💬 WhatsApp</a>
+    </div>
+
+    <p class="hero-note" id="hero-note">No app download · No account · Just chat</p>
+  </div>
+</section>
+
+<style>
+  .hero {
+    position: relative;
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    padding: 120px 24px 80px;
+    overflow: hidden;
+  }
+
+  .hero-glow {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 700px;
+    height: 700px;
+    background: radial-gradient(ellipse at center, rgba(255, 69, 0, 0.12) 0%, transparent 70%);
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  .hero-content {
+    position: relative;
+    z-index: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0;
+  }
+
+  .hero-title-wrap {
+    position: relative;
+    display: inline-flex;
+    flex-direction: column;
+    align-items: center;
+    line-height: 0.88;
+    margin-bottom: 40px;
+  }
+
+  .hero-line {
+    font-family: 'Chubbo', system-ui, sans-serif;
+    font-weight: 900;
+    font-size: clamp(100px, 22vw, 220px);
+    letter-spacing: -4px;
+    line-height: 0.88;
+    color: var(--text);
+    display: block;
+  }
+
+  .mascot {
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    transform: translate(-50%, -50%) rotate(-8deg);
+    font-size: clamp(80px, 14vw, 150px);
+    z-index: 10;
+    filter: drop-shadow(0 0 32px rgba(255, 69, 0, 0.7)) drop-shadow(0 0 8px rgba(255, 140, 0, 0.5));
+    line-height: 1;
+    pointer-events: none;
+  }
+
+  .hero-tagline {
+    font-family: 'Chubbo', system-ui, sans-serif;
+    font-size: clamp(18px, 2.5vw, 26px);
+    font-weight: 400;
+    color: var(--muted);
+    line-height: 1.5;
+    margin-bottom: 36px;
+    opacity: 0;
+  }
+
+  .hero-tagline em {
+    color: var(--text);
+    font-style: normal;
+    font-weight: 600;
+  }
+
+  .hero-cta-row {
+    display: flex;
+    gap: 16px;
+    flex-wrap: wrap;
+    justify-content: center;
+    margin-bottom: 20px;
+    opacity: 0;
+  }
+
+  .hero-note {
+    font-size: 13px;
+    color: var(--muted);
+    letter-spacing: 0.5px;
+    opacity: 0;
+  }
+</style>
+
+<script>
+  import { gsap } from 'gsap'
+  import { ScrollTrigger } from 'gsap/ScrollTrigger'
+
+  gsap.registerPlugin(ScrollTrigger)
+
+  // Mascot drops from above with bounce
+  gsap.fromTo(
+    '#hero-mascot',
+    {
+      y: -350,
+      rotation: -20,
+      scale: 0.4,
+    },
+    {
+      y: 0,
+      rotation: -8,
+      scale: 1,
+      ease: 'back.out(1.7)',
+      duration: 1.2,
+      delay: 0.4,
+    }
+  )
+
+  // Stagger fade-in for tagline, CTA buttons, and note
+  gsap.to(['#hero-tagline', '#hero-cta', '#hero-note'], {
+    opacity: 1,
+    y: 0,
+    duration: 0.8,
+    stagger: 0.15,
+    ease: 'power2.out',
+    delay: 0.8,
+  })
+
+  gsap.set(['#hero-tagline', '#hero-cta', '#hero-note'], { y: 20 })
+</script>

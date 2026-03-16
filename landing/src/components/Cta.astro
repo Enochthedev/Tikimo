@@ -1,0 +1,124 @@
+---
+---
+<!-- Wave into CTA -->
+<div class="wave-divider" aria-hidden="true">
+  <svg viewBox="0 0 1440 60" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg">
+    <path d="M0,30 C240,60 480,0 720,30 C960,60 1200,0 1440,30 L1440,60 L0,60 Z" fill="#130010"/>
+  </svg>
+</div>
+
+<section class="cta-section">
+  <div class="cta-inner">
+    <div class="cta-title-wrap" data-cta-title>
+      <span class="cta-line cta-tonight" id="cta-tonight">Tonight</span>
+      <span class="cta-line cta-starts" id="cta-starts">starts here.</span>
+    </div>
+
+    <p class="cta-subtitle" data-cta-sub>
+      Open Tiximo and share your location. That's it.
+    </p>
+
+    <div class="cta-buttons" data-cta-btns>
+      <a href="https://t.me/tiximo_bot" class="btn btn-fire">✈️ Open in Telegram</a>
+      <a href="https://wa.me/tiximo" class="btn btn-ghost">💬 WhatsApp</a>
+    </div>
+  </div>
+</section>
+
+<style>
+  .wave-divider {
+    background: #080808;
+    line-height: 0;
+  }
+
+  .cta-section {
+    background: #130010;
+    padding: 120px 24px;
+    text-align: center;
+    overflow: hidden;
+  }
+
+  .cta-inner {
+    max-width: 700px;
+    margin: 0 auto;
+  }
+
+  .cta-title-wrap {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    margin-bottom: 28px;
+    opacity: 0;
+    transform: translateY(30px);
+  }
+
+  .cta-line {
+    font-family: 'Chubbo', system-ui, sans-serif;
+    font-weight: 900;
+    font-size: clamp(56px, 12vw, 120px);
+    letter-spacing: -3px;
+    line-height: 0.9;
+    display: block;
+  }
+
+  .cta-tonight {
+    color: var(--text);
+  }
+
+  .cta-starts {
+    background: linear-gradient(135deg, var(--fire), var(--ember), var(--glow));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  .cta-subtitle {
+    font-size: clamp(16px, 2vw, 20px);
+    color: var(--muted);
+    margin-bottom: 40px;
+    line-height: 1.5;
+    opacity: 0;
+    transform: translateY(20px);
+  }
+
+  .cta-buttons {
+    display: flex;
+    gap: 16px;
+    justify-content: center;
+    flex-wrap: wrap;
+    opacity: 0;
+    transform: translateY(20px);
+  }
+</style>
+
+<script>
+  import { gsap } from 'gsap'
+  import { ScrollTrigger } from 'gsap/ScrollTrigger'
+
+  gsap.registerPlugin(ScrollTrigger)
+
+  ScrollTrigger.create({
+    trigger: '.cta-section',
+    start: 'top 75%',
+    once: true,
+    onEnter: () => {
+      // Title animates in
+      gsap.to('[data-cta-title]', {
+        opacity: 1,
+        y: 0,
+        duration: 0.9,
+        ease: 'power3.out',
+      })
+
+      // Subtitle + buttons stagger
+      gsap.to(['[data-cta-sub]', '[data-cta-btns]'], {
+        opacity: 1,
+        y: 0,
+        duration: 0.7,
+        ease: 'power2.out',
+        stagger: 0.15,
+        delay: 0.2,
+      })
+    },
+  })
+</script>

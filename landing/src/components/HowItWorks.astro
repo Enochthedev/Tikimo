@@ -1,0 +1,146 @@
+---
+---
+<!-- Wave divider from hero (#080808) into this section (#130010) -->
+<div class="wave-divider" aria-hidden="true">
+  <svg viewBox="0 0 1440 60" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg">
+    <path d="M0,30 C240,60 480,0 720,30 C960,60 1200,0 1440,30 L1440,60 L0,60 Z" fill="#130010"/>
+  </svg>
+</div>
+
+<section class="how-it-works">
+  <div class="container">
+    <div class="section-header">
+      <span class="section-eyebrow">How it works</span>
+      <h2 class="section-title">Three messages.<br />Done.</h2>
+    </div>
+
+    <div class="steps-grid">
+      <div class="step-card" data-step>
+        <span class="step-number">01</span>
+        <h3 class="step-title">Share your location</h3>
+        <p class="step-body">Drop a pin. That's all Tiximo needs.</p>
+      </div>
+
+      <div class="step-card" data-step>
+        <span class="step-number">02</span>
+        <h3 class="step-title">Get a shortlist</h3>
+        <p class="step-body">Pulls from Ticketmaster + Eventbrite, picks the good stuff, writes the pitch itself.</p>
+      </div>
+
+      <div class="step-card" data-step>
+        <span class="step-number">03</span>
+        <h3 class="step-title">One tap to book</h3>
+        <p class="step-body">Straight to checkout. You never leave the chat.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Wave divider out to ChatDemo (#080808) -->
+<div class="wave-divider wave-out" aria-hidden="true">
+  <svg viewBox="0 0 1440 60" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg">
+    <path d="M0,30 C240,60 480,0 720,30 C960,60 1200,0 1440,30 L1440,60 L0,60 Z" fill="#080808"/>
+  </svg>
+</div>
+
+<style>
+  .how-it-works {
+    background: #130010;
+    padding: 100px 0;
+  }
+
+  .wave-divider {
+    background: #080808;
+    line-height: 0;
+  }
+
+  .wave-out {
+    background: #130010;
+  }
+
+  .section-header {
+    text-align: center;
+    margin-bottom: 60px;
+  }
+
+  .section-title {
+    color: var(--text);
+    white-space: pre-line;
+  }
+
+  .steps-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 24px;
+  }
+
+  @media (max-width: 768px) {
+    .steps-grid {
+      grid-template-columns: 1fr;
+    }
+  }
+
+  .step-card {
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 28px;
+    transition: border-color 0.3s ease, transform 0.3s ease;
+    opacity: 0;
+    transform: translateY(40px);
+  }
+
+  .step-card:hover {
+    border-color: rgba(255, 69, 0, 0.3);
+    transform: translateY(-4px) !important;
+  }
+
+  .step-number {
+    display: block;
+    font-family: 'Chubbo', system-ui, sans-serif;
+    font-size: 13px;
+    font-weight: 700;
+    letter-spacing: 2px;
+    color: var(--fire);
+    text-transform: uppercase;
+    font-variant-numeric: tabular-nums;
+    margin-bottom: 16px;
+  }
+
+  .step-title {
+    font-family: 'Chubbo', system-ui, sans-serif;
+    font-size: 22px;
+    font-weight: 700;
+    color: var(--text);
+    margin-bottom: 10px;
+    letter-spacing: -0.3px;
+  }
+
+  .step-body {
+    font-size: 15px;
+    color: var(--muted);
+    line-height: 1.6;
+  }
+</style>
+
+<script>
+  import { gsap } from 'gsap'
+  import { ScrollTrigger } from 'gsap/ScrollTrigger'
+
+  gsap.registerPlugin(ScrollTrigger)
+
+  gsap.utils.toArray<HTMLElement>('[data-step]').forEach((card, i) => {
+    gsap.to(card, {
+      opacity: 1,
+      y: 0,
+      duration: 0.7,
+      ease: 'power2.out',
+      delay: i * 0.12,
+      scrollTrigger: {
+        trigger: card,
+        start: 'top 85%',
+        once: true,
+      },
+    })
+  })
+</script>

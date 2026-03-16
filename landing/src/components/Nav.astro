@@ -1,0 +1,64 @@
+---
+---
+<nav class="nav" id="main-nav">
+  <div class="nav-inner container">
+    <a href="/" class="nav-logo">Tiximo</a>
+    <a href="https://t.me/tiximo_bot" class="btn btn-fire nav-cta">Get started →</a>
+  </div>
+</nav>
+
+<style>
+  .nav {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    z-index: 100;
+    padding: 20px 0;
+    transition: background 0.3s ease, padding 0.3s ease, backdrop-filter 0.3s ease;
+  }
+
+  .nav.scrolled {
+    background: rgba(8, 8, 8, 0.88);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    padding: 14px 0;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .nav-inner {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  .nav-logo {
+    font-family: 'Chubbo', system-ui, sans-serif;
+    font-size: 24px;
+    font-weight: 800;
+    letter-spacing: -0.5px;
+    text-decoration: none;
+    background: linear-gradient(135deg, var(--fire), var(--ember));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  .nav-cta {
+    font-size: 14px;
+    padding: 10px 22px;
+  }
+</style>
+
+<script>
+  const nav = document.getElementById('main-nav')
+  if (nav) {
+    window.addEventListener('scroll', () => {
+      if (window.scrollY > 40) {
+        nav.classList.add('scrolled')
+      } else {
+        nav.classList.remove('scrolled')
+      }
+    }, { passive: true })
+  }
+</script>

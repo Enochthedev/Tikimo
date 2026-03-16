@@ -1,0 +1,8 @@
+node_modules/
+dist/
+src/web/map/dist/
+.env
+*.env.local
+drizzle/
+*.db
+.DS_Store

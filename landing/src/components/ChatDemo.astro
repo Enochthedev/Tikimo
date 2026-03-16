@@ -1,0 +1,288 @@
+---
+---
+<section class="chat-demo">
+  <div class="container">
+    <div class="chat-grid">
+
+      <!-- Left: Text -->
+      <div class="chat-text" data-chat-text>
+        <span class="section-eyebrow">In action</span>
+        <h2 class="section-title">Your chat app<br />is the app.</h2>
+        <p class="chat-body">No downloads. No new UI to learn. Tiximo lives in Telegram and WhatsApp — right where you already are.</p>
+        <div class="chat-ctas">
+          <a href="https://t.me/tiximo_bot" class="btn btn-fire">✈️ Try Tiximo</a>
+        </div>
+      </div>
+
+      <!-- Right: Chat Window -->
+      <div class="chat-window" data-chat-window>
+        <!-- Top bar -->
+        <div class="chat-topbar">
+          <div class="chat-avatar">👾</div>
+          <div class="chat-meta">
+            <span class="chat-name">Tiximo</span>
+            <span class="chat-status">● online</span>
+          </div>
+        </div>
+
+        <!-- Messages -->
+        <div class="chat-messages">
+          <div class="msg msg-bot" data-msg="0">
+            <div class="msg-bubble">
+              Hi! I'm Tiximo. 👾<br />Tell me where you are and I'll find you something good.
+            </div>
+          </div>
+
+          <div class="msg msg-user" data-msg="1">
+            <div class="msg-bubble">📍 Brixton, London</div>
+          </div>
+
+          <div class="msg msg-bot" data-msg="2">
+            <div class="msg-bubble">Found 6 things near you. Here's what's good:</div>
+          </div>
+
+          <div class="msg msg-bot msg-card" data-msg="3">
+            <div class="msg-bubble msg-event-card">
+              <div class="event-title">Hessle Audio @ Corsica Studios</div>
+              <div class="event-meta">📅 Tonight · 10pm – 6am &nbsp;·&nbsp; 📍 Elephant & Castle &nbsp;·&nbsp; 💰 £12</div>
+              <p class="event-pitch">Four hours of warehouse techno and a room that's been doing this since 2009.</p>
+              <a href="#" class="event-book-btn">🎟 Book it</a>
+            </div>
+          </div>
+
+          <div class="msg msg-bot" data-msg="4">
+            <div class="msg-bubble">Or tell me what you're after. I'll narrow it down.</div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+<style>
+  .chat-demo {
+    background: #080808;
+    padding: 100px 0;
+  }
+
+  .chat-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 64px;
+    align-items: center;
+  }
+
+  @media (max-width: 860px) {
+    .chat-grid {
+      grid-template-columns: 1fr;
+      gap: 48px;
+    }
+  }
+
+  /* Left */
+  .chat-text {
+    opacity: 0;
+    transform: translateX(-30px);
+  }
+
+  .section-title {
+    color: var(--text);
+    margin-bottom: 20px;
+  }
+
+  .chat-body {
+    font-size: 17px;
+    color: var(--muted);
+    line-height: 1.65;
+    margin-bottom: 32px;
+  }
+
+  /* Chat window */
+  .chat-window {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    overflow: hidden;
+    opacity: 0;
+    transform: translateX(30px);
+  }
+
+  .chat-topbar {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 16px 20px;
+    border-bottom: 1px solid var(--border);
+    background: rgba(255, 255, 255, 0.02);
+  }
+
+  .chat-avatar {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, var(--fire), var(--ember));
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 20px;
+    flex-shrink: 0;
+  }
+
+  .chat-meta {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+  }
+
+  .chat-name {
+    font-family: 'Chubbo', system-ui, sans-serif;
+    font-size: 15px;
+    font-weight: 700;
+    color: var(--text);
+  }
+
+  .chat-status {
+    font-size: 12px;
+    color: #4caf50;
+    font-weight: 500;
+  }
+
+  .chat-messages {
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .msg {
+    display: flex;
+    opacity: 0;
+    transform: translateY(12px);
+  }
+
+  .msg-bot {
+    justify-content: flex-start;
+  }
+
+  .msg-user {
+    justify-content: flex-end;
+  }
+
+  .msg-bubble {
+    max-width: 85%;
+    padding: 10px 14px;
+    border-radius: 16px;
+    font-size: 14px;
+    line-height: 1.55;
+  }
+
+  .msg-bot .msg-bubble {
+    background: rgba(255, 255, 255, 0.06);
+    color: var(--text);
+    border-bottom-left-radius: 4px;
+  }
+
+  .msg-user .msg-bubble {
+    background: linear-gradient(135deg, var(--fire), var(--ember));
+    color: #fff;
+    border-bottom-right-radius: 4px;
+  }
+
+  /* Event card */
+  .msg-event-card {
+    background: rgba(255, 69, 0, 0.08) !important;
+    border: 1px solid rgba(255, 69, 0, 0.25);
+    max-width: 92% !important;
+    padding: 14px 16px !important;
+  }
+
+  .event-title {
+    font-family: 'Chubbo', system-ui, sans-serif;
+    font-size: 15px;
+    font-weight: 700;
+    color: var(--text);
+    margin-bottom: 6px;
+  }
+
+  .event-meta {
+    font-size: 12px;
+    color: var(--muted);
+    margin-bottom: 8px;
+    line-height: 1.5;
+  }
+
+  .event-pitch {
+    font-size: 13px;
+    color: #aaa;
+    line-height: 1.5;
+    margin-bottom: 12px;
+  }
+
+  .event-book-btn {
+    display: inline-block;
+    padding: 7px 16px;
+    background: linear-gradient(135deg, var(--fire), var(--ember));
+    color: #fff;
+    font-family: 'Chubbo', system-ui, sans-serif;
+    font-size: 13px;
+    font-weight: 700;
+    border-radius: 100px;
+    text-decoration: none;
+    transition: opacity 0.2s;
+  }
+
+  .event-book-btn:hover {
+    opacity: 0.85;
+  }
+</style>
+
+<script>
+  import { gsap } from 'gsap'
+  import { ScrollTrigger } from 'gsap/ScrollTrigger'
+
+  gsap.registerPlugin(ScrollTrigger)
+
+  // Animate text column in
+  ScrollTrigger.create({
+    trigger: '[data-chat-text]',
+    start: 'top 80%',
+    once: true,
+    onEnter: () => {
+      gsap.to('[data-chat-text]', {
+        opacity: 1,
+        x: 0,
+        duration: 0.8,
+        ease: 'power2.out',
+      })
+    },
+  })
+
+  // Animate chat window in
+  ScrollTrigger.create({
+    trigger: '[data-chat-window]',
+    start: 'top 80%',
+    once: true,
+    onEnter: () => {
+      gsap.to('[data-chat-window]', {
+        opacity: 1,
+        x: 0,
+        duration: 0.8,
+        ease: 'power2.out',
+        delay: 0.1,
+      })
+
+      // Sequential message reveal
+      const msgs = document.querySelectorAll('[data-msg]')
+      msgs.forEach((msg, i) => {
+        gsap.to(msg, {
+          opacity: 1,
+          y: 0,
+          duration: 0.45,
+          ease: 'power2.out',
+          delay: 0.3 + i * 0.22,
+        })
+      })
+    },
+  })
+</script>

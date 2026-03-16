@@ -1,0 +1,88 @@
+---
+import Base from '@/layouts/Base.astro'
+import Nav from '@/components/Nav.astro'
+import Hero from '@/components/Hero.astro'
+import HowItWorks from '@/components/HowItWorks.astro'
+import ChatDemo from '@/components/ChatDemo.astro'
+import Features from '@/components/Features.astro'
+import MapTeaser from '@/components/MapTeaser.astro'
+import Cta from '@/components/Cta.astro'
+---
+<Base>
+  <Nav />
+  <Hero />
+  <HowItWorks />
+  <ChatDemo />
+  <Features />
+  <MapTeaser />
+  <Cta />
+
+  <footer class="site-footer">
+    <div class="container footer-inner">
+      <span class="footer-logo">Tiximo</span>
+      <p class="footer-tagline">Find your scene.</p>
+      <nav class="footer-links">
+        <a href="https://t.me/tiximo_bot">Telegram</a>
+        <a href="https://wa.me/tiximo">WhatsApp</a>
+        <a href="/privacy">Privacy</a>
+        <a href="/terms">Terms</a>
+      </nav>
+      <p class="footer-copy">© 2025 Tiximo. Built for people who go out.</p>
+    </div>
+  </footer>
+</Base>
+
+<style>
+  .site-footer {
+    background: #080808;
+    border-top: 1px solid var(--border);
+    padding: 48px 24px;
+    text-align: center;
+  }
+
+  .footer-inner {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 16px;
+  }
+
+  .footer-logo {
+    font-family: 'Chubbo', system-ui, sans-serif;
+    font-size: 22px;
+    font-weight: 800;
+    background: linear-gradient(135deg, var(--fire), var(--ember));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  .footer-tagline {
+    font-size: 14px;
+    color: var(--muted);
+    margin-top: -8px;
+  }
+
+  .footer-links {
+    display: flex;
+    gap: 24px;
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+
+  .footer-links a {
+    font-size: 14px;
+    color: var(--muted);
+    text-decoration: none;
+    transition: color 0.2s;
+  }
+
+  .footer-links a:hover {
+    color: var(--ember);
+  }
+
+  .footer-copy {
+    font-size: 12px;
+    color: #333;
+  }
+</style>

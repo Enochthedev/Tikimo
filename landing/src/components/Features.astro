@@ -1,0 +1,156 @@
+---
+const features = [
+  {
+    icon: '📍',
+    title: 'Geo-smart search',
+    body: 'Results from Ticketmaster + Eventbrite, filtered to your exact location.',
+  },
+  {
+    icon: '👾',
+    title: 'AI that sounds human',
+    body: 'Tiximo writes every pitch itself. No copy-paste descriptions.',
+  },
+  {
+    icon: '🎟',
+    title: 'One tap to book',
+    body: 'Deep link to checkout. No new accounts.',
+  },
+  {
+    icon: '🔥',
+    title: 'Live hype map',
+    body: 'See what\'s heating up in real time.',
+  },
+  {
+    icon: '🍀',
+    title: 'Feeling Lucky',
+    body: 'Can\'t decide? Tiximo picks one and stands behind it.',
+  },
+  {
+    icon: '📡',
+    title: 'Telegram & WhatsApp',
+    body: 'Works wherever you already are.',
+  },
+]
+---
+
+<!-- Wave into features section -->
+<div class="wave-divider" aria-hidden="true">
+  <svg viewBox="0 0 1440 60" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg">
+    <path d="M0,30 C240,60 480,0 720,30 C960,60 1200,0 1440,30 L1440,60 L0,60 Z" fill="#0d0009"/>
+  </svg>
+</div>
+
+<section class="features">
+  <div class="container">
+    <div class="section-header">
+      <span class="section-eyebrow">What Tiximo does</span>
+      <h2 class="section-title">Built for the night<br />you actually want.</h2>
+    </div>
+
+    <div class="features-grid">
+      {features.map((f, i) => (
+        <div class="feature-card" data-feature style={`--delay: ${i * 0.1}s`}>
+          <div class="feature-icon">{f.icon}</div>
+          <h3 class="feature-title">{f.title}</h3>
+          <p class="feature-body">{f.body}</p>
+        </div>
+      ))}
+    </div>
+  </div>
+</section>
+
+<!-- Wave out -->
+<div class="wave-divider wave-out" aria-hidden="true">
+  <svg viewBox="0 0 1440 60" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg">
+    <path d="M0,30 C240,60 480,0 720,30 C960,60 1200,0 1440,30 L1440,60 L0,60 Z" fill="#080808"/>
+  </svg>
+</div>
+
+<style>
+  .features {
+    background: #0d0009;
+    padding: 80px 0;
+  }
+
+  .wave-divider {
+    background: #080808;
+    line-height: 0;
+  }
+
+  .wave-out {
+    background: #0d0009;
+  }
+
+  .section-header {
+    text-align: center;
+    margin-bottom: 56px;
+  }
+
+  .section-title {
+    color: var(--text);
+  }
+
+  .features-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+    gap: 20px;
+  }
+
+  .feature-card {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 28px;
+    transition: border-color 0.3s ease, transform 0.3s ease;
+    opacity: 0;
+    transform: translateY(30px);
+  }
+
+  .feature-card:hover {
+    border-color: rgba(255, 69, 0, 0.35);
+    transform: translateY(-4px) !important;
+  }
+
+  .feature-icon {
+    font-size: 32px;
+    margin-bottom: 14px;
+    line-height: 1;
+  }
+
+  .feature-title {
+    font-family: 'Chubbo', system-ui, sans-serif;
+    font-size: 18px;
+    font-weight: 700;
+    color: var(--text);
+    margin-bottom: 8px;
+    letter-spacing: -0.2px;
+  }
+
+  .feature-body {
+    font-size: 14px;
+    color: var(--muted);
+    line-height: 1.6;
+  }
+</style>
+
+<script>
+  import { gsap } from 'gsap'
+  import { ScrollTrigger } from 'gsap/ScrollTrigger'
+
+  gsap.registerPlugin(ScrollTrigger)
+
+  gsap.utils.toArray<HTMLElement>('[data-feature]').forEach((card, i) => {
+    gsap.to(card, {
+      opacity: 1,
+      y: 0,
+      duration: 0.6,
+      ease: 'power2.out',
+      delay: i * 0.1,
+      scrollTrigger: {
+        trigger: card,
+        start: 'top 88%',
+        once: true,
+      },
+    })
+  })
+</script>
