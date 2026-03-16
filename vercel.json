@@ -1,0 +1,5 @@
+{
+  "buildCommand": "cd landing && pnpm install && pnpm build",
+  "outputDirectory": "landing/dist",
+  "installCommand": "echo 'skip root install'"
+}
