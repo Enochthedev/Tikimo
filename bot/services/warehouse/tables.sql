@@ -1,6 +1,8 @@
 -- Run this once against your ClickHouse Cloud instance
 -- tiximo database
 
+CREATE DATABASE IF NOT EXISTS tiximo;
+
 CREATE TABLE IF NOT EXISTS tiximo.interactions (
     user_id       String,
     event_id      String,

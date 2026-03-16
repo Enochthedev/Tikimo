@@ -11,11 +11,17 @@ const __dirname = dirname(fileURLToPath(import.meta.url))
 
 const SQL = readFileSync(join(__dirname, '../services/warehouse/tables.sql'), 'utf-8')
 
-// Split on semicolons, run each statement individually
+// Split on semicolons, strip comment lines, run each statement individually
 const statements = SQL
   .split(';')
-  .map((s) => s.trim())
-  .filter((s) => s.length > 0 && !s.startsWith('--'))
+  .map((s) =>
+    s
+      .split('\n')
+      .filter((line) => !line.trim().startsWith('--'))
+      .join('\n')
+      .trim(),
+  )
+  .filter((s) => s.length > 0)
 
 let ok = 0
 for (const statement of statements) {
