@@ -518,4 +518,18 @@
       })
     },
   })
+
+  // Fade out particles & grain when leaving hero section
+  ScrollTrigger.create({
+    trigger: '#hero',
+    start: 'bottom 120%',
+    end: 'bottom top',
+    onLeave: () => {
+      gsap.to(['#hero-particles', '.hero-grain'], { opacity: 0, duration: 0.4 })
+    },
+    onEnterBack: () => {
+      gsap.to('#hero-particles', { opacity: 1, duration: 0.4 })
+      gsap.to('.hero-grain', { opacity: 0.035, duration: 0.4 })
+    },
+  })
 </script>
