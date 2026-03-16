@@ -4,31 +4,68 @@
   <canvas class="hero-canvas" id="hero-canvas" aria-hidden="true"></canvas>
 
   <div class="hero-stage">
-    <div class="hero-center" id="hero-center">
-      <h1 class="hero-wordmark" id="hero-wordmark">TIXIMO</h1>
-
-      <!-- SVG ticket — scroll-driven from bottom -->
-      <div class="hero-ticket" id="hero-ticket" aria-hidden="true">
+    <!-- Ticket lives here (separate from hero-center so scroll + mouse transforms don't fight) -->
+    <!-- hero-ticket-wrap  → scroll: y, scale, opacity, rotateX (the 3D tumble) -->
+    <!-- hero-ticket       → mouse: rotateX, rotateY (perspective tilt) + idle float -->
+    <div class="hero-ticket-wrap" id="hero-ticket-wrap" aria-hidden="true">
+      <div class="hero-ticket" id="hero-ticket">
         <svg viewBox="0 0 220 148" fill="none" xmlns="http://www.w3.org/2000/svg">
           <defs>
             <linearGradient id="tg" x1="0" y1="0" x2="220" y2="148" gradientUnits="userSpaceOnUse">
               <stop offset="0%" stop-color="#d4583a"/>
               <stop offset="100%" stop-color="#c4915a"/>
             </linearGradient>
+            <!-- Diagonal shine streak: narrow bright band from top-left to bottom-right -->
+            <linearGradient id="shine-grad" x1="0%" y1="0%" x2="100%" y2="100%">
+              <stop offset="0%"   stop-color="white" stop-opacity="0"/>
+              <stop offset="38%"  stop-color="white" stop-opacity="0"/>
+              <stop offset="50%"  stop-color="white" stop-opacity="0.26"/>
+              <stop offset="62%"  stop-color="white" stop-opacity="0"/>
+              <stop offset="100%" stop-color="white" stop-opacity="0"/>
+            </linearGradient>
             <mask id="tm">
               <rect width="220" height="148" rx="16" fill="#fff"/>
-              <circle cx="154" cy="0" r="12" fill="#000"/>
+              <circle cx="154" cy="0"   r="12" fill="#000"/>
               <circle cx="154" cy="148" r="12" fill="#000"/>
             </mask>
           </defs>
+
+          <!-- Body -->
           <rect width="220" height="148" rx="16" fill="url(#tg)" mask="url(#tm)"/>
-          <line x1="154" y1="16" x2="154" y2="132" stroke="rgba(0,0,0,.1)" stroke-width="1.5" stroke-dasharray="4 3"/>
-          <text x="72" y="58" text-anchor="middle" font-family="'Cabinet Grotesk',sans-serif" font-size="16" font-weight="800" fill="rgba(0,0,0,.45)" letter-spacing="3">ADMIT</text>
-          <text x="72" y="84" text-anchor="middle" font-family="'Cabinet Grotesk',sans-serif" font-size="16" font-weight="800" fill="rgba(0,0,0,.45)" letter-spacing="3">ONE</text>
-          <text x="72" y="116" text-anchor="middle" font-size="10" fill="rgba(0,0,0,.15)" letter-spacing="4">&#9733; &#9733; &#9733;</text>
-          <text transform="rotate(90 186 74)" x="186" y="74" text-anchor="middle" font-family="monospace" font-size="7" fill="rgba(0,0,0,.1)">No. 01071982</text>
+
+          <!-- Subtle inner border -->
+          <rect x="1" y="1" width="218" height="146" rx="15" fill="none"
+                stroke="rgba(255,255,255,0.08)" stroke-width="1" mask="url(#tm)"/>
+
+          <!-- Tear line -->
+          <line x1="154" y1="16" x2="154" y2="132"
+                stroke="rgba(0,0,0,.12)" stroke-width="1.5" stroke-dasharray="4 3"/>
+
+          <!-- Stub: event name slot -->
+          <rect x="162" y="32" width="46" height="6" rx="3" fill="rgba(0,0,0,0.12)"/>
+          <rect x="162" y="46" width="34" height="6" rx="3" fill="rgba(0,0,0,0.09)"/>
+
+          <!-- Main text -->
+          <text x="72" y="54"  text-anchor="middle" font-family="'Cabinet Grotesk',sans-serif"
+                font-size="15" font-weight="800" fill="rgba(0,0,0,.4)" letter-spacing="4">ADMIT</text>
+          <text x="72" y="78"  text-anchor="middle" font-family="'Cabinet Grotesk',sans-serif"
+                font-size="15" font-weight="800" fill="rgba(0,0,0,.4)" letter-spacing="4">ONE</text>
+          <text x="72" y="112" text-anchor="middle" font-size="10"
+                fill="rgba(0,0,0,.15)" letter-spacing="4">&#9733; &#9733; &#9733;</text>
+
+          <!-- Serial number rotated in stub -->
+          <text transform="rotate(90 186 74)" x="186" y="74" text-anchor="middle"
+                font-family="monospace" font-size="7" fill="rgba(0,0,0,0.12)">No. 01071982</text>
+
+          <!-- Shine overlay — GSAP sweeps x from -260 to 260 -->
+          <rect class="ticket-shine" x="-260" y="0" width="260" height="148"
+                fill="url(#shine-grad)" mask="url(#tm)" rx="16"/>
         </svg>
       </div>
+    </div>
+
+    <div class="hero-center" id="hero-center">
+      <h1 class="hero-wordmark" id="hero-wordmark">TIXIMO</h1>
 
       <p class="hero-sub" id="hero-sub">
         Events near you, found and booked<br />without leaving your chat app.
@@ -76,8 +113,41 @@
     z-index: 1;
     padding: 0 28px;
     overflow: hidden;
+    /* Enables 3D perspective for all child transforms */
+    perspective: 1400px;
   }
 
+  /* ── Ticket wrapper: scroll-driven transforms live here ── */
+  .hero-ticket-wrap {
+    position: absolute;
+    left: 50%;
+    top: 46%;
+    z-index: 2;
+    pointer-events: none;
+    opacity: 0;
+    /* GSAP sets xPercent: -50, yPercent: -50 for centering */
+  }
+
+  /* ── Ticket inner: mouse tilt + idle float + glow ── */
+  .hero-ticket {
+    width: clamp(100px, 15vw, 170px);
+    will-change: transform;
+    filter: drop-shadow(0 18px 52px rgba(212, 88, 58, 0.28));
+    animation: ticket-glow 3.8s ease-in-out infinite;
+  }
+
+  @keyframes ticket-glow {
+    0%, 100% { filter: drop-shadow(0 18px 52px rgba(212, 88, 58, 0.22)); }
+    50%       { filter: drop-shadow(0 22px 72px rgba(212, 88, 58, 0.50)); }
+  }
+
+  .hero-ticket svg {
+    width: 100%;
+    height: auto;
+    display: block;
+  }
+
+  /* ── Text center ── */
   .hero-center {
     position: relative;
     display: flex;
@@ -85,6 +155,7 @@
     align-items: center;
     gap: 32px;
     opacity: 0;
+    z-index: 1;
   }
 
   .hero-wordmark {
@@ -95,26 +166,6 @@
     line-height: 0.85;
     color: var(--text);
     text-align: center;
-    position: relative;
-    z-index: 1;
-  }
-
-  .hero-ticket {
-    position: absolute;
-    left: 50%;
-    top: 50%;
-    width: clamp(100px, 15vw, 170px);
-    z-index: 2;
-    pointer-events: none;
-    will-change: transform;
-    filter: drop-shadow(0 16px 48px rgba(212, 88, 58, 0.3));
-    transform: translate(-50%, 110vh) rotate(14deg);
-    opacity: 0;
-  }
-
-  .hero-ticket svg {
-    width: 100%;
-    height: auto;
   }
 
   .hero-sub {
@@ -170,12 +221,12 @@
 
   @keyframes bar-pulse {
     0%, 100% { opacity: 0.3; transform: scaleY(0.4); }
-    50% { opacity: 0.8; transform: scaleY(1); }
+    50%       { opacity: 0.8; transform: scaleY(1); }
   }
 
   @media (max-width: 600px) {
     .hero-wordmark { letter-spacing: -2px; }
-    .hero-ticket { width: 80px; }
+    .hero-ticket   { width: 86px; }
   }
 </style>
 
@@ -185,7 +236,7 @@
   import { ScrollTrigger } from 'gsap/ScrollTrigger'
   gsap.registerPlugin(ScrollTrigger)
 
-  // ─── Particles (warm amber/gold tones) ────────────────────────────────────
+  // ─── Particles ───────────────────────────────────────────────────────────────
   const canvas = document.getElementById('hero-canvas') as HTMLCanvasElement
   if (canvas) {
     const scene = new THREE.Scene()
@@ -199,80 +250,144 @@
     const tex = (() => {
       const c = document.createElement('canvas'); c.width = c.height = 64
       const x = c.getContext('2d')!
-      const g = x.createRadialGradient(32,32,0,32,32,32)
-      g.addColorStop(0,'rgba(255,255,255,1)')
-      g.addColorStop(.3,'rgba(255,255,255,.4)')
-      g.addColorStop(1,'rgba(255,255,255,0)')
-      x.fillStyle = g; x.fillRect(0,0,64,64)
+      const g = x.createRadialGradient(32, 32, 0, 32, 32, 32)
+      g.addColorStop(0, 'rgba(255,255,255,1)')
+      g.addColorStop(.3, 'rgba(255,255,255,.4)')
+      g.addColorStop(1, 'rgba(255,255,255,0)')
+      x.fillStyle = g; x.fillRect(0, 0, 64, 64)
       return new THREE.CanvasTexture(c)
     })()
 
     const N = innerWidth < 768 ? 60 : 120
-    const pos = new Float32Array(N*3), col = new Float32Array(N*3)
+    const pos = new Float32Array(N * 3), col = new Float32Array(N * 3)
     const vy = new Float32Array(N), vx = new Float32Array(N)
-    // warm amber / terracotta / gold palette
     const pal = [
-      [.83,.35,.23],  // terracotta
-      [.77,.57,.35],  // warm sand
-      [.91,.77,.40],  // gold
-      [.65,.45,.28],  // brown amber
-      [.95,.85,.55],  // pale gold
+      [.83, .35, .23],
+      [.77, .57, .35],
+      [.91, .77, .40],
+      [.65, .45, .28],
+      [.95, .85, .55],
     ]
-    for (let i=0;i<N;i++){
+    for (let i = 0; i < N; i++) {
       pos[i*3]=(Math.random()-.5)*55; pos[i*3+1]=(Math.random()-.5)*40; pos[i*3+2]=(Math.random()-.5)*20
-      const c=pal[Math.random()*pal.length|0]; col[i*3]=c[0]; col[i*3+1]=c[1]; col[i*3+2]=c[2]
-      vy[i]=Math.random()*.015+.004; vx[i]=(Math.random()-.5)*.008
+      const c = pal[Math.random() * pal.length | 0]; col[i*3]=c[0]; col[i*3+1]=c[1]; col[i*3+2]=c[2]
+      vy[i] = Math.random() * .015 + .004; vx[i] = (Math.random() - .5) * .008
     }
     const geo = new THREE.BufferGeometry()
-    geo.setAttribute('position', new THREE.BufferAttribute(pos,3))
-    geo.setAttribute('color', new THREE.BufferAttribute(col,3))
+    geo.setAttribute('position', new THREE.BufferAttribute(pos, 3))
+    geo.setAttribute('color',    new THREE.BufferAttribute(col, 3))
     const mat = new THREE.PointsMaterial({
-      size: innerWidth<768?.25:.35, map:tex, vertexColors:true,
-      transparent:true, opacity:.4, blending:THREE.AdditiveBlending, depthWrite:false
+      size: innerWidth < 768 ? .25 : .35, map: tex, vertexColors: true,
+      transparent: true, opacity: .4, blending: THREE.AdditiveBlending, depthWrite: false
     })
-    const pts = new THREE.Points(geo,mat); scene.add(pts)
-    let vis=true
-    function tick(){if(!vis)return; requestAnimationFrame(tick)
-      const p=geo.attributes.position.array as Float32Array
-      for(let i=0;i<N;i++){p[i*3]+=vx[i];p[i*3+1]+=vy[i];if(p[i*3+1]>22){p[i*3+1]=-22;p[i*3]=(Math.random()-.5)*55}}
-      geo.attributes.position.needsUpdate=true; pts.rotation.y+=.00008; gl.render(scene,cam)
+    const pts = new THREE.Points(geo, mat); scene.add(pts)
+    let vis = true
+    function tick() {
+      if (!vis) return; requestAnimationFrame(tick)
+      const p = geo.attributes.position.array as Float32Array
+      for (let i = 0; i < N; i++) {
+        p[i*3] += vx[i]; p[i*3+1] += vy[i]
+        if (p[i*3+1] > 22) { p[i*3+1] = -22; p[i*3] = (Math.random() - .5) * 55 }
+      }
+      geo.attributes.position.needsUpdate = true
+      pts.rotation.y += .00008
+      gl.render(scene, cam)
     }
     tick()
-    new IntersectionObserver(e=>{vis=e[0].isIntersecting;if(vis)tick()}).observe(canvas)
-    addEventListener('resize',()=>{w=canvas.clientWidth;h=canvas.clientHeight;cam.aspect=w/h;cam.updateProjectionMatrix();gl.setSize(w,h)},{passive:true})
+    new IntersectionObserver(e => { vis = e[0].isIntersecting; if (vis) tick() }).observe(canvas)
+    addEventListener('resize', () => {
+      w = canvas.clientWidth; h = canvas.clientHeight
+      cam.aspect = w / h; cam.updateProjectionMatrix(); gl.setSize(w, h)
+    }, { passive: true })
   }
 
-  // ─── Load animation ────────────────────────────────────────────────────────
+  // ─── Page load: text elements ────────────────────────────────────────────────
   const tl = gsap.timeline({ defaults: { ease: 'power3.out' } })
   tl.set('#hero-center', { opacity: 1 })
   tl.fromTo('#hero-wordmark', { y: 50, opacity: 0, scale: .94 }, { y: 0, opacity: 1, scale: 1, duration: 1.2 }, .15)
-  tl.fromTo('#hero-sub', { y: 20, opacity: 0 }, { y: 0, opacity: 1, duration: .8 }, .5)
+  tl.fromTo('#hero-sub',     { y: 20, opacity: 0 }, { y: 0, opacity: 1, duration: .8 }, .5)
   tl.fromTo('#hero-actions', { y: 14, opacity: 0 }, { y: 0, opacity: 1, duration: .7 }, .65)
-  tl.fromTo('#hero-note', { opacity: 0 }, { opacity: 1, duration: .6 }, .8)
-  tl.fromTo('#hero-scroll', { opacity: 0 }, { opacity: 1, duration: .6 }, 1)
+  tl.fromTo('#hero-note',    { opacity: 0 },        { opacity: 1, duration: .6 }, .8)
+  tl.fromTo('#hero-scroll',  { opacity: 0 },        { opacity: 1, duration: .6 }, 1)
 
-  // ─── Scroll: ticket rises from below ───────────────────────────────────────
+  // ─── Ticket: setup centering via GSAP (keeps transform clean) ────────────────
+  gsap.set('#hero-ticket-wrap', { xPercent: -50, yPercent: -50, transformPerspective: 1400 })
+  // Inner element gets its own perspective for the mouse-tilt rotateX/Y
+  gsap.set('#hero-ticket', { transformPerspective: 900 })
+
+  // ─── Scroll: 3-phase animation ────────────────────────────────────────────────
+  //  Phase 1 (0 → 50%):  3D tumble rise — card flips to face you as it comes up
+  //  Phase 2 (50→ 68%):  settle with slight overshoot
+  //  Phase 3 (76→100%):  zoom toward viewer + fade (like walking past it)
   const st = gsap.timeline({
-    scrollTrigger: { trigger: '#hero', start: 'top top', end: 'bottom bottom', scrub: 1.4 }
+    scrollTrigger: { trigger: '#hero', start: 'top top', end: 'bottom bottom', scrub: 1.5 }
   })
-  st.fromTo('#hero-ticket',
-    { y: '110vh', rotation: 16, scale: .45, opacity: 0 },
-    { y: '0vh', rotation: -6, scale: 1.08, opacity: 1, ease: 'power2.out' }, 0)
-  st.to('#hero-ticket', { y: '-4vh', rotation: -8, scale: 1, ease: 'power1.inOut' }, .65)
-  st.to('#hero-scroll', { opacity: 0 }, .15)
 
-  // Fade particles when leaving hero
+  st.fromTo('#hero-ticket-wrap',
+    { y: '130vh', rotateX: 62, rotation: 18, scale: 0.28, opacity: 0 },
+    { y: '0vh',   rotateX:  0, rotation: -5, scale: 1.06, opacity: 1, ease: 'power2.out', duration: 0.5 },
+    0
+  )
+  st.to('#hero-ticket-wrap',
+    { y: 0, rotation: -7, scale: 1, ease: 'power1.inOut', duration: 0.18 },
+    0.5
+  )
+  st.to('#hero-ticket-wrap',
+    { y: -70, scale: 1.24, opacity: 0, ease: 'power2.in', duration: 0.24 },
+    0.76
+  )
+  st.to('#hero-scroll', { opacity: 0, duration: 0.08 }, 0.04)
+
+  // ─── Mouse tilt: 3D perspective on inner element (doesn't conflict with scroll) ─
+  const isMobile = matchMedia('(hover: none)').matches
+  if (!isMobile) {
+    window.addEventListener('mousemove', (e) => {
+      const nx = (e.clientX / window.innerWidth  - 0.5) * 2  // –1 → 1
+      const ny = (e.clientY / window.innerHeight - 0.5) * 2  // –1 → 1
+      gsap.to('#hero-ticket', {
+        rotateY:  nx * 17,
+        rotateX: -ny * 11,
+        duration: 0.55,
+        ease: 'power2.out',
+        overwrite: 'auto',
+      })
+    }, { passive: true })
+
+    // Reset tilt when cursor leaves viewport
+    document.addEventListener('mouseleave', () => {
+      gsap.to('#hero-ticket', { rotateX: 0, rotateY: 0, duration: 1, ease: 'power2.out' })
+    })
+  }
+
+  // ─── Shine sweep: triggers when ticket is settled (~45% scroll progress) ────────
+  let shineRunning = false
+  function runShine() {
+    shineRunning = true
+    gsap.fromTo('.ticket-shine',
+      { attr: { x: -260 } },
+      {
+        attr: { x: 260 },
+        duration: 0.72,
+        ease: 'power1.inOut',
+        onComplete: () => gsap.delayedCall(4.8, runShine),
+      }
+    )
+  }
+
+  ScrollTrigger.create({
+    trigger: '#hero',
+    start: 'top top',
+    end: 'bottom bottom',
+    onUpdate: (self) => {
+      if (!shineRunning && self.progress >= 0.44) runShine()
+    },
+  })
+
+  // ─── Fade particles when leaving hero ────────────────────────────────────────
   ScrollTrigger.create({
     trigger: '#hero',
     start: 'bottom 100%',
-    onLeave: () => gsap.to('#hero-canvas', { opacity: 0, duration: .4 }),
+    onLeave:     () => gsap.to('#hero-canvas', { opacity: 0, duration: .4 }),
     onEnterBack: () => gsap.to('#hero-canvas', { opacity: 1, duration: .4 }),
-  })
-
-  // Gentle float after scroll
-  ScrollTrigger.create({
-    trigger: '#hero', start: 'bottom bottom',
-    onLeave: () => gsap.to('#hero-ticket', { y: '-4vh', rotation: -10, duration: 3.5, ease: 'sine.inOut', yoyo: true, repeat: -1 }),
-    onEnterBack: () => gsap.killTweensOf('#hero-ticket', 'y,rotation'),
   })
 </script>

@@ -62,9 +62,15 @@ export async function handleDiscovery(
   if (events.length === 0) {
     await recordZeroResults(geoCell)
     const locationHint = options?.cityLabel ?? 'nearby'
+    const vibeHint = options?.category
+      ? ` for ${options.category}`
+      : ''
+    const expandHint = options?.cityLabel
+      ? ''
+      : ' Try expanding to your LGA, state, or a nearby city — say "events in [city name]" and I\'ll look there.'
     return {
       type: 'message',
-      text: `I searched far and wide ${locationHint !== 'nearby' ? `in ${locationHint}` : locationHint} — nothing on right now. Try again later or search another city like "events in London".`,
+      text: `I searched far and wide ${locationHint !== 'nearby' ? `in ${locationHint}` : locationHint}${vibeHint} — nothing on right now.${expandHint}`,
     }
   }
 

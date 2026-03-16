@@ -280,8 +280,13 @@ async function handleSeeMore(
   const nextPage = (ctx?.currentPage ?? 0) + 1
   await updateContext(msg.platform, msg.userId, { currentPage: nextPage })
 
-  // For now re-run discovery — future: implement true pagination with offset
-  const response = await handleDiscovery(msg, user)
+  // Use context location as fallback when the action message carries no GPS and user has no stored location
+  const enrichedMsg =
+    !msg.location && !user.lastLat && ctx?.lastLat && ctx?.lastLng
+      ? { ...msg, location: { lat: ctx.lastLat, lng: ctx.lastLng } }
+      : msg
+
+  const response = await handleDiscovery(enrichedMsg, user)
   if (response.type === 'event_list') {
     return { ...response, text: `More coming at you 👇` }
   }
@@ -293,13 +298,20 @@ async function handleSomethingDifferent(
   user: { id: string; radiusKm: number; lastLat?: number; lastLng?: number },
 ): Promise<OutboundResponse> {
   const ctx = await getContext(msg.platform, msg.userId)
-  // Clear last event cache so we get a fresh batch
+  // Advance to the next page rather than resetting to 0 — resetting causes the same events to repeat
+  const nextPage = (ctx?.currentPage ?? 0) + 1
   await updateContext(msg.platform, msg.userId, {
     dislikedEventIds: ctx?.dislikedEventIds ?? [],
-    currentPage: 0,
+    currentPage: nextPage,
   })
 
-  const response = await handleDiscovery(msg, user)
+  // Use context location as fallback when the action message carries no GPS and user has no stored location
+  const enrichedMsg =
+    !msg.location && !user.lastLat && ctx?.lastLat && ctx?.lastLng
+      ? { ...msg, location: { lat: ctx.lastLat, lng: ctx.lastLng } }
+      : msg
+
+  const response = await handleDiscovery(enrichedMsg, user)
   if (response.type === 'event_list') {
     return { ...response, text: "Here's a different batch 🔀" }
   }

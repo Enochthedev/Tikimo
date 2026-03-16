@@ -21,6 +21,16 @@ export const LIFE_OF_PARTY_TRIGGERS = [
   "what's on fire",
   "most hyped",
   "biggest event",
+  "party mood",
+  "in a party",
+  "want to party",
+  "feeling like a party",
+  "nightlife",
+  "club night",
+  "going out tonight",
+  "hit a club",
+  "rave",
+  "banger",
 ]
 
 export function isLifeOfPartyQuery(text: string): boolean {
@@ -48,7 +58,7 @@ export async function handleLifeOfParty(
   if (events.length === 0) {
     return {
       type: 'message',
-      text: "Nothing nearby tonight. Try a bigger city — Lagos, London, Cape Town are all going off.",
+      text: "No bangers right in your area right now 😅 The party might be a bit further out — try expanding your search to your  state, or a nearby city. You can say something like \"events in Lagos\" or \"parties in Abuja\" and I'll hunt it down.",
     }
   }
 
