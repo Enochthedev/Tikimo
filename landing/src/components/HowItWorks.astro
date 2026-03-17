@@ -2,102 +2,134 @@
 ---
 <section class="how" id="how">
   <div class="container">
-    <div class="section-header">
+    <div class="how-header">
       <span class="section-label">How it works</span>
-      <h2 class="section-title">Three messages. Done.</h2>
+      <h2 class="section-title">Three messages.<br />Done.</h2>
     </div>
 
-    <ol class="steps">
-      <li class="step" data-step>
-        <span class="step-num">01</span>
+    <div class="steps">
+
+      <div class="step" data-step>
+        <div class="step-watermark">01</div>
         <div class="step-content">
           <h3 class="step-title">Share your location</h3>
           <p class="step-body">Drop a pin. That's all Tiximo needs to start looking.</p>
         </div>
-      </li>
+        <div class="step-line" aria-hidden="true"></div>
+      </div>
 
-      <li class="step" data-step>
-        <span class="step-num">02</span>
+      <div class="step" data-step>
+        <div class="step-watermark">02</div>
         <div class="step-content">
           <h3 class="step-title">Get a shortlist</h3>
           <p class="step-body">It pulls from Ticketmaster + Eventbrite, picks the good stuff, writes the pitch itself.</p>
         </div>
-      </li>
+        <div class="step-line" aria-hidden="true"></div>
+      </div>
 
-      <li class="step" data-step>
-        <span class="step-num">03</span>
+      <div class="step step-last" data-step>
+        <div class="step-watermark">03</div>
         <div class="step-content">
           <h3 class="step-title">One tap to book</h3>
           <p class="step-body">Straight to checkout. You never leave the chat.</p>
         </div>
-      </li>
-    </ol>
+      </div>
+
+    </div>
   </div>
 </section>
 
 <style>
   .how {
     background: var(--bg);
-    padding: 160px 0;
+    padding: 140px 0;
+    overflow: hidden;
   }
 
-  .section-header {
+  .how-header {
     margin-bottom: 80px;
   }
 
   .steps {
-    list-style: none;
     display: flex;
     flex-direction: column;
     gap: 0;
+    max-width: 800px;
   }
 
   .step {
-    display: flex;
-    align-items: baseline;
-    gap: 32px;
-    padding: 40px 0;
-    border-top: 1px solid var(--border);
+    position: relative;
+    display: grid;
+    grid-template-columns: 140px 1fr;
+    align-items: start;
+    gap: 0;
     opacity: 0;
-    transform: translateY(24px);
+    transform: translateY(28px);
+    padding-bottom: 64px;
   }
 
-  .step:last-child {
-    border-bottom: 1px solid var(--border);
-  }
+  .step-last { padding-bottom: 0; }
 
-  .step-num {
-    font-family: var(--font-display);
-    font-size: 14px;
-    font-weight: 600;
-    color: var(--accent);
-    letter-spacing: 1px;
+  /* Giant watermark number */
+  .step-watermark {
+    font-family: var(--font-tunnel);
+    font-size: clamp(80px, 12vw, 140px);
+    font-weight: 400;
+    line-height: 0.85;
+    letter-spacing: -4px;
+    color: transparent;
+    -webkit-text-stroke: 1px rgba(255, 107, 0, 0.25);
+    user-select: none;
     flex-shrink: 0;
-    width: 40px;
+    padding-top: 4px;
+    transition: color 0.35s, -webkit-text-stroke-color 0.35s;
+  }
+
+  .step:hover .step-watermark {
+    -webkit-text-stroke-color: rgba(255, 107, 0, 0.55);
+    color: rgba(255, 107, 0, 0.06);
   }
 
   .step-content {
-    flex: 1;
+    padding: 14px 0 0 8px;
   }
 
   .step-title {
-    font-family: var(--font-display);
-    font-size: clamp(22px, 3vw, 32px);
-    font-weight: 600;
+    font-family: var(--font-heading);
+    font-size: clamp(24px, 3.5vw, 40px);
+    font-weight: 700;
     color: var(--text);
-    letter-spacing: -0.5px;
-    margin-bottom: 8px;
+    letter-spacing: -1px;
+    margin-bottom: 12px;
+    line-height: 1.1;
+    text-transform: uppercase;
   }
 
   .step-body {
     font-size: 16px;
     color: var(--dim);
-    line-height: 1.6;
-    max-width: 480px;
+    line-height: 1.7;
+    max-width: 460px;
+  }
+
+  /* Connecting line between steps */
+  .step-line {
+    position: absolute;
+    left: 56px;
+    bottom: 0;
+    width: 1px;
+    height: 64px;
+    background: linear-gradient(to bottom, rgba(255, 107, 0, 0.4), transparent);
   }
 
   @media (max-width: 600px) {
-    .step { gap: 20px; padding: 32px 0; }
+    .step {
+      grid-template-columns: 80px 1fr;
+      padding-bottom: 48px;
+    }
+    .step-line { left: 36px; height: 48px; }
+    .step-watermark { font-size: 64px; letter-spacing: -3px; }
+    .step-title { font-size: 22px; }
   }
 </style>
 
@@ -111,9 +143,9 @@
     gsap.to(el, {
       opacity: 1,
       y: 0,
-      duration: 0.8,
+      duration: 0.9,
       ease: 'power2.out',
-      delay: i * 0.1,
+      delay: i * 0.15,
       scrollTrigger: {
         trigger: el,
         start: 'top 85%',

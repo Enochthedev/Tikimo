@@ -5,14 +5,25 @@ import Hero from '@/components/Hero.astro'
 import HowItWorks from '@/components/HowItWorks.astro'
 import ChatDemo from '@/components/ChatDemo.astro'
 import Features from '@/components/Features.astro'
+import Stats from '@/components/Stats.astro'
 import MapTeaser from '@/components/MapTeaser.astro'
 import Cta from '@/components/Cta.astro'
+import Marquee from '@/components/Marquee.astro'
 ---
 <Base>
   <Nav />
   <Hero />
+  <Stats />
+  <Marquee
+    items={['FIND YOUR SCENE', 'TONIGHT', 'NO DOWNLOAD', 'JUST CHAT', 'TELEGRAM', 'WHATSAPP', 'BOOK IT', 'NEAR YOU']}
+    speed={34}
+  />
   <HowItWorks />
   <ChatDemo />
+  <Marquee
+    items={['GEO-SMART', 'AI WRITTEN', 'ONE TAP', 'LIVE HYPE MAP', 'FEELING LUCKY', 'NO ACCOUNT']}
+    speed={28}
+  />
   <Features />
   <MapTeaser />
   <Cta />
@@ -36,10 +47,13 @@ import Cta from '@/components/Cta.astro'
 
 <style>
   .site-footer {
-    background: var(--bg);
+    background: var(--surface);
     border-top: 1px solid var(--border);
-    padding: 56px 28px;
+    padding: 64px 28px;
     text-align: center;
+    position: relative;
+    z-index: 10;
+    isolation: isolate;
   }
 
   .footer-inner {
@@ -51,10 +65,13 @@ import Cta from '@/components/Cta.astro'
 
   .footer-logo {
     font-family: var(--font-display);
-    font-size: 20px;
-    font-weight: 600;
-    color: var(--text);
-    letter-spacing: -0.5px;
+    font-size: 28px;
+    font-weight: 400;
+    letter-spacing: 2px;
+    background: linear-gradient(135deg, #fff 30%, #a78bfa);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
   }
 
   .footer-tagline {

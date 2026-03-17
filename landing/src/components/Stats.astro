@@ -1,0 +1,281 @@
+---
+---
+<!-- Soundwave ticker above the marquee -->
+<div class="soundwave-strip" aria-hidden="true">
+  <div class="sw-bars">
+    <span class="sw-bar"></span><span class="sw-bar"></span><span class="sw-bar"></span>
+    <span class="sw-bar"></span><span class="sw-bar"></span><span class="sw-bar"></span>
+    <span class="sw-bar"></span><span class="sw-bar"></span><span class="sw-bar"></span>
+    <span class="sw-bar"></span><span class="sw-bar"></span><span class="sw-bar"></span>
+    <span class="sw-bar"></span><span class="sw-bar"></span><span class="sw-bar"></span>
+    <span class="sw-bar"></span><span class="sw-bar"></span><span class="sw-bar"></span>
+    <span class="sw-bar"></span><span class="sw-bar"></span><span class="sw-bar"></span>
+    <span class="sw-bar"></span><span class="sw-bar"></span><span class="sw-bar"></span>
+    <span class="sw-bar"></span><span class="sw-bar"></span><span class="sw-bar"></span>
+    <span class="sw-bar"></span><span class="sw-bar"></span><span class="sw-bar"></span>
+    <span class="sw-bar"></span><span class="sw-bar"></span><span class="sw-bar"></span>
+    <span class="sw-bar"></span><span class="sw-bar"></span><span class="sw-bar"></span>
+    <span class="sw-bar"></span><span class="sw-bar"></span><span class="sw-bar"></span>
+    <span class="sw-bar"></span><span class="sw-bar"></span><span class="sw-bar"></span>
+    <span class="sw-bar"></span><span class="sw-bar"></span><span class="sw-bar"></span>
+    <span class="sw-bar"></span><span class="sw-bar"></span><span class="sw-bar"></span>
+    <span class="sw-bar"></span><span class="sw-bar"></span><span class="sw-bar"></span>
+    <span class="sw-bar"></span><span class="sw-bar"></span><span class="sw-bar"></span>
+    <span class="sw-bar"></span><span class="sw-bar"></span><span class="sw-bar"></span>
+    <span class="sw-bar"></span><span class="sw-bar"></span><span class="sw-bar"></span>
+  </div>
+</div>
+
+<section class="stats" aria-label="Platform stats">
+  <div class="stats-outer">
+    <div class="stats-track">
+
+      <!-- Set 1 -->
+      <div class="stat-item">
+        <span class="stat-num" style="--col:#FF6B00">2</span>
+        <span class="stat-label" style="--col:#FF6B00">CHAT<br>PLATFORMS</span>
+      </div>
+      <span class="stat-div" style="--col:#FF6B00">/</span>
+
+      <div class="stat-item">
+        <span class="stat-num" style="--col:#00e5ff">0</span>
+        <span class="stat-label" style="--col:#00e5ff">DOWNLOADS<br>NEEDED</span>
+      </div>
+      <span class="stat-div" style="--col:#00e5ff">/</span>
+
+      <div class="stat-item">
+        <span class="stat-num" style="--col:#ff2d6b">1</span>
+        <span class="stat-label" style="--col:#ff2d6b">TAP<br>TO BOOK</span>
+      </div>
+      <span class="stat-div" style="--col:#ff2d6b">/</span>
+
+      <div class="stat-item">
+        <span class="stat-num" style="--col:#FFAA3C">∞</span>
+        <span class="stat-label" style="--col:#FFAA3C">EVENTS<br>NEAR YOU</span>
+      </div>
+      <span class="stat-div" style="--col:#FFAA3C">/</span>
+
+      <div class="stat-item">
+        <span class="stat-num" style="--col:#ff9500">AI</span>
+        <span class="stat-label" style="--col:#ff9500">POWERED<br>DISCOVERY</span>
+      </div>
+      <span class="stat-div" style="--col:#ff9500">/</span>
+
+      <!-- Set 2 — duplicate for seamless loop -->
+      <div class="stat-item">
+        <span class="stat-num" style="--col:#FF6B00">2</span>
+        <span class="stat-label" style="--col:#FF6B00">CHAT<br>PLATFORMS</span>
+      </div>
+      <span class="stat-div" style="--col:#FF6B00">/</span>
+
+      <div class="stat-item">
+        <span class="stat-num" style="--col:#00e5ff">0</span>
+        <span class="stat-label" style="--col:#00e5ff">DOWNLOADS<br>NEEDED</span>
+      </div>
+      <span class="stat-div" style="--col:#00e5ff">/</span>
+
+      <div class="stat-item">
+        <span class="stat-num" style="--col:#ff2d6b">1</span>
+        <span class="stat-label" style="--col:#ff2d6b">TAP<br>TO BOOK</span>
+      </div>
+      <span class="stat-div" style="--col:#ff2d6b">/</span>
+
+      <div class="stat-item">
+        <span class="stat-num" style="--col:#FFAA3C">∞</span>
+        <span class="stat-label" style="--col:#FFAA3C">EVENTS<br>NEAR YOU</span>
+      </div>
+      <span class="stat-div" style="--col:#FFAA3C">/</span>
+
+      <div class="stat-item">
+        <span class="stat-num" style="--col:#ff9500">AI</span>
+        <span class="stat-label" style="--col:#ff9500">POWERED<br>DISCOVERY</span>
+      </div>
+      <span class="stat-div" style="--col:#ff9500">/</span>
+
+    </div>
+  </div>
+</section>
+
+<style>
+  /* ── Soundwave strip ── */
+  .soundwave-strip {
+    background: #000;
+    border-top: 1px solid #111;
+    padding: 18px 0 0;
+    overflow: hidden;
+    display: flex;
+    justify-content: center;
+    align-items: flex-end;
+    height: 52px;
+  }
+
+  .sw-bars {
+    display: flex;
+    align-items: flex-end;
+    gap: 3px;
+    height: 32px;
+  }
+
+  .sw-bar {
+    display: block;
+    width: 3px;
+    border-radius: 2px;
+    background: var(--accent);
+    animation: sw-pulse 0.9s ease-in-out infinite alternate;
+    min-height: 4px;
+  }
+
+  /* Give each bar a different height + delay to simulate audio waveform */
+  .sw-bar:nth-child(1)  { height: 8px;  animation-delay: 0.00s; --col: #FF6B00; background: var(--col); }
+  .sw-bar:nth-child(2)  { height: 18px; animation-delay: 0.07s; --col: #FF6B00; background: var(--col); }
+  .sw-bar:nth-child(3)  { height: 28px; animation-delay: 0.14s; --col: #FF6B00; background: var(--col); }
+  .sw-bar:nth-child(4)  { height: 14px; animation-delay: 0.21s; --col: #FF6B00; background: var(--col); }
+  .sw-bar:nth-child(5)  { height: 22px; animation-delay: 0.28s; --col: #FF8C00; background: var(--col); }
+  .sw-bar:nth-child(6)  { height: 32px; animation-delay: 0.35s; --col: #FFAA3C; background: var(--col); }
+  .sw-bar:nth-child(7)  { height: 20px; animation-delay: 0.42s; --col: #FF2D6B; background: var(--col); }
+  .sw-bar:nth-child(8)  { height: 26px; animation-delay: 0.49s; --col: #FF2D6B; background: var(--col); }
+  .sw-bar:nth-child(9)  { height: 32px; animation-delay: 0.56s; --col: #ff2d6b; background: var(--col); }
+  .sw-bar:nth-child(10) { height: 24px; animation-delay: 0.63s; --col: #ff2d6b; background: var(--col); }
+  .sw-bar:nth-child(11) { height: 30px; animation-delay: 0.70s; --col: #ff5c38; background: var(--col); }
+  .sw-bar:nth-child(12) { height: 18px; animation-delay: 0.77s; --col: #ff9500; background: var(--col); }
+  .sw-bar:nth-child(13) { height: 26px; animation-delay: 0.84s; --col: #ff9500; background: var(--col); }
+  .sw-bar:nth-child(14) { height: 32px; animation-delay: 0.91s; --col: #ffc200; background: var(--col); }
+  .sw-bar:nth-child(15) { height: 20px; animation-delay: 0.98s; --col: #00e5ff; background: var(--col); }
+  .sw-bar:nth-child(16) { height: 28px; animation-delay: 0.05s; --col: #00e5ff; background: var(--col); }
+  .sw-bar:nth-child(17) { height: 16px; animation-delay: 0.12s; --col: #00E5FF; background: var(--col); }
+  .sw-bar:nth-child(18) { height: 32px; animation-delay: 0.19s; --col: #00e5ff; background: var(--col); }
+  .sw-bar:nth-child(19) { height: 22px; animation-delay: 0.26s; --col: #00E5FF; background: var(--col); }
+  .sw-bar:nth-child(20) { height: 28px; animation-delay: 0.33s; --col: #00e5ff; background: var(--col); }
+  .sw-bar:nth-child(21) { height: 14px; animation-delay: 0.40s; --col: #00c4ff; background: var(--col); }
+  .sw-bar:nth-child(22) { height: 32px; animation-delay: 0.47s; --col: #FF6B00; background: var(--col); }
+  .sw-bar:nth-child(23) { height: 24px; animation-delay: 0.54s; --col: #FFAA3C; background: var(--col); }
+  .sw-bar:nth-child(24) { height: 18px; animation-delay: 0.61s; --col: #FF6B00; background: var(--col); }
+  .sw-bar:nth-child(25) { height: 28px; animation-delay: 0.68s; --col: #ff2d6b; background: var(--col); }
+  .sw-bar:nth-child(26) { height: 32px; animation-delay: 0.75s; --col: #ff2d6b; background: var(--col); }
+  .sw-bar:nth-child(27) { height: 20px; animation-delay: 0.82s; --col: #ff5c38; background: var(--col); }
+  .sw-bar:nth-child(28) { height: 26px; animation-delay: 0.89s; --col: #ff9500; background: var(--col); }
+  .sw-bar:nth-child(29) { height: 12px; animation-delay: 0.96s; --col: #ffc200; background: var(--col); }
+  .sw-bar:nth-child(30) { height: 28px; animation-delay: 0.03s; --col: #ff9500; background: var(--col); }
+  .sw-bar:nth-child(31) { height: 22px; animation-delay: 0.10s; --col: #FF6B00; background: var(--col); }
+  .sw-bar:nth-child(32) { height: 30px; animation-delay: 0.17s; --col: #FFAA3C; background: var(--col); }
+  .sw-bar:nth-child(33) { height: 16px; animation-delay: 0.24s; --col: #FF6B00; background: var(--col); }
+  .sw-bar:nth-child(34) { height: 32px; animation-delay: 0.31s; --col: #00e5ff; background: var(--col); }
+  .sw-bar:nth-child(35) { height: 24px; animation-delay: 0.38s; --col: #00e5ff; background: var(--col); }
+  .sw-bar:nth-child(36) { height: 18px; animation-delay: 0.45s; --col: #00E5FF; background: var(--col); }
+  .sw-bar:nth-child(37) { height: 28px; animation-delay: 0.52s; --col: #ff2d6b; background: var(--col); }
+  .sw-bar:nth-child(38) { height: 8px;  animation-delay: 0.59s; --col: #ff2d6b; background: var(--col); }
+  .sw-bar:nth-child(39) { height: 22px; animation-delay: 0.66s; --col: #ff9500; background: var(--col); }
+  .sw-bar:nth-child(40) { height: 14px; animation-delay: 0.73s; --col: #ffc200; background: var(--col); }
+  .sw-bar:nth-child(41) { height: 30px; animation-delay: 0.80s; --col: #FF6B00; background: var(--col); }
+  .sw-bar:nth-child(42) { height: 20px; animation-delay: 0.87s; --col: #FFAA3C; background: var(--col); }
+  .sw-bar:nth-child(43) { height: 26px; animation-delay: 0.94s; --col: #FF6B00; background: var(--col); }
+  .sw-bar:nth-child(44) { height: 32px; animation-delay: 0.01s; --col: #00e5ff; background: var(--col); }
+  .sw-bar:nth-child(45) { height: 18px; animation-delay: 0.08s; --col: #00e5ff; background: var(--col); }
+  .sw-bar:nth-child(46) { height: 28px; animation-delay: 0.15s; --col: #ff2d6b; background: var(--col); }
+  .sw-bar:nth-child(47) { height: 12px; animation-delay: 0.22s; --col: #ff9500; background: var(--col); }
+  .sw-bar:nth-child(48) { height: 24px; animation-delay: 0.29s; --col: #ff9500; background: var(--col); }
+  .sw-bar:nth-child(49) { height: 16px; animation-delay: 0.36s; --col: #ffc200; background: var(--col); }
+  .sw-bar:nth-child(50) { height: 8px;  animation-delay: 0.43s; --col: #FF6B00; background: var(--col); }
+  .sw-bar:nth-child(51) { height: 22px; animation-delay: 0.50s; --col: #FFAA3C; background: var(--col); }
+  .sw-bar:nth-child(52) { height: 32px; animation-delay: 0.57s; --col: #FF6B00; background: var(--col); }
+  .sw-bar:nth-child(53) { height: 14px; animation-delay: 0.64s; --col: #00e5ff; background: var(--col); }
+  .sw-bar:nth-child(54) { height: 28px; animation-delay: 0.71s; --col: #00e5ff; background: var(--col); }
+  .sw-bar:nth-child(55) { height: 20px; animation-delay: 0.78s; --col: #00E5FF; background: var(--col); }
+  .sw-bar:nth-child(56) { height: 32px; animation-delay: 0.85s; --col: #ff2d6b; background: var(--col); }
+  .sw-bar:nth-child(57) { height: 26px; animation-delay: 0.92s; --col: #ff2d6b; background: var(--col); }
+  .sw-bar:nth-child(58) { height: 18px; animation-delay: 0.09s; --col: #ff5c38; background: var(--col); }
+  .sw-bar:nth-child(59) { height: 30px; animation-delay: 0.16s; --col: #ff9500; background: var(--col); }
+  .sw-bar:nth-child(60) { height: 10px; animation-delay: 0.23s; --col: #ffc200; background: var(--col); }
+
+  @keyframes sw-pulse {
+    from { transform: scaleY(0.25); opacity: 0.5; }
+    to   { transform: scaleY(1);    opacity: 1; }
+  }
+
+  /* ── Stats marquee ── */
+  .stats {
+    background: #000;
+    border-bottom: 1px solid #111;
+    overflow: hidden;
+    padding: 0;
+  }
+
+  /* Fade edges */
+  .stats::before,
+  .stats::after {
+    content: '';
+    position: absolute;
+    top: 0; bottom: 0;
+    width: 160px;
+    z-index: 2;
+    pointer-events: none;
+  }
+  .stats::before { left: 0;  background: linear-gradient(to right, #000, transparent); }
+  .stats::after  { right: 0; background: linear-gradient(to left,  #000, transparent); }
+
+  .stats-outer { overflow: hidden; }
+
+  .stats-track {
+    display: flex;
+    align-items: flex-end;
+    width: max-content;
+    animation: marquee-scroll 32s linear infinite;
+    padding: 40px 0 48px;
+    gap: 0;
+  }
+
+  .stats-track:hover { animation-play-state: paused; }
+
+  @keyframes marquee-scroll {
+    from { transform: translateX(0); }
+    to   { transform: translateX(-50%); }
+  }
+
+  /* ── Each stat ── */
+  .stat-item {
+    display: flex;
+    align-items: flex-end;
+    gap: 18px;
+    padding: 0 20px;
+  }
+
+  .stat-num {
+    font-family: var(--font-tunnel);
+    font-size: clamp(140px, 20vw, 260px);
+    font-weight: 400;
+    line-height: 0.82;
+    letter-spacing: -6px;
+    color: var(--col);
+    display: block;
+    text-shadow:
+      0 0  20px color-mix(in srgb, var(--col) 80%, transparent),
+      0 0  60px color-mix(in srgb, var(--col) 45%, transparent),
+      0 0 120px color-mix(in srgb, var(--col) 20%, transparent),
+      4px 6px 0 rgba(0,0,0,0.6);
+  }
+
+  .stat-label {
+    font-family: var(--font-tunnel);
+    font-size: clamp(11px, 1.2vw, 16px);
+    font-weight: 400;
+    letter-spacing: 2.5px;
+    text-transform: uppercase;
+    color: color-mix(in srgb, var(--col) 60%, white);
+    line-height: 1.5;
+    padding-bottom: 18px;
+    max-width: 130px;
+    opacity: 0.8;
+  }
+
+  .stat-div {
+    font-family: var(--font-tunnel);
+    font-size: clamp(70px, 10vw, 160px);
+    font-weight: 400;
+    line-height: 0.82;
+    color: var(--col);
+    opacity: 0.15;
+    padding: 0 4px;
+    align-self: flex-end;
+    padding-bottom: 10px;
+  }
+</style>

@@ -3,70 +3,44 @@
 <section class="hero" id="hero">
   <canvas class="hero-canvas" id="hero-canvas" aria-hidden="true"></canvas>
 
+  <!-- Concert spotlight beams from above -->
+  <div class="hero-beams" aria-hidden="true">
+    <div class="beam beam-1"></div>
+    <div class="beam beam-2"></div>
+    <div class="beam beam-3"></div>
+    <div class="beam beam-4"></div>
+  </div>
+
   <div class="hero-stage">
-    <!-- Ticket lives here (separate from hero-center so scroll + mouse transforms don't fight) -->
-    <!-- hero-ticket-wrap  → scroll: y, scale, opacity, rotateX (the 3D tumble) -->
-    <!-- hero-ticket       → mouse: rotateX, rotateY (perspective tilt) + idle float -->
+
+    <!-- ── 3D Perspective Text Tunnel — very subtle, background only ── -->
+    <div class="hero-tunnel" aria-hidden="true">
+      <div class="tunnel-grid">
+        <div class="tunnel-row r1">FIND&nbsp;&nbsp;YOUR&nbsp;&nbsp;SCENE&nbsp;&nbsp;FIND&nbsp;&nbsp;YOUR&nbsp;&nbsp;SCENE&nbsp;&nbsp;FIND&nbsp;&nbsp;YOUR&nbsp;&nbsp;SCENE</div>
+        <div class="tunnel-row r2">TONIGHT&nbsp;&bull;&nbsp;EVENTS&nbsp;&bull;&nbsp;NEAR&nbsp;YOU&nbsp;&bull;&nbsp;TONIGHT&nbsp;&bull;&nbsp;EVENTS&nbsp;&bull;&nbsp;NEAR&nbsp;YOU</div>
+        <div class="tunnel-row r3">TIXIMO&ensp;&ensp;&ensp;TIXIMO&ensp;&ensp;&ensp;TIXIMO&ensp;&ensp;&ensp;TIXIMO&ensp;&ensp;&ensp;TIXIMO</div>
+        <div class="tunnel-row r4">BOOK&nbsp;IT&nbsp;&bull;&nbsp;JUST&nbsp;CHAT&nbsp;&bull;&nbsp;BOOK&nbsp;IT&nbsp;&bull;&nbsp;JUST&nbsp;CHAT&nbsp;&bull;&nbsp;BOOK&nbsp;IT</div>
+        <div class="tunnel-row r5">NO&nbsp;APPS&nbsp;&bull;&nbsp;NO&nbsp;SIGNUP&nbsp;&bull;&nbsp;NO&nbsp;DOWNLOAD&nbsp;&bull;&nbsp;NO&nbsp;APPS&nbsp;&bull;&nbsp;NO&nbsp;SIGNUP</div>
+        <div class="tunnel-row r1">FIND&nbsp;&nbsp;YOUR&nbsp;&nbsp;SCENE&nbsp;&nbsp;FIND&nbsp;&nbsp;YOUR&nbsp;&nbsp;SCENE&nbsp;&nbsp;FIND&nbsp;&nbsp;YOUR&nbsp;&nbsp;SCENE</div>
+      </div>
+      <div class="tunnel-mask mask-top"></div>
+      <div class="tunnel-mask mask-bottom"></div>
+      <div class="tunnel-mask mask-left"></div>
+      <div class="tunnel-mask mask-right"></div>
+      <!-- Strong center vignette keeps wordmark readable -->
+      <div class="tunnel-mask mask-center"></div>
+    </div>
+
+    <!-- ── Ticket ── -->
     <div class="hero-ticket-wrap" id="hero-ticket-wrap" aria-hidden="true">
       <div class="hero-ticket" id="hero-ticket">
-        <svg viewBox="0 0 220 148" fill="none" xmlns="http://www.w3.org/2000/svg">
-          <defs>
-            <linearGradient id="tg" x1="0" y1="0" x2="220" y2="148" gradientUnits="userSpaceOnUse">
-              <stop offset="0%" stop-color="#d4583a"/>
-              <stop offset="100%" stop-color="#c4915a"/>
-            </linearGradient>
-            <!-- Diagonal shine streak: narrow bright band from top-left to bottom-right -->
-            <linearGradient id="shine-grad" x1="0%" y1="0%" x2="100%" y2="100%">
-              <stop offset="0%"   stop-color="white" stop-opacity="0"/>
-              <stop offset="38%"  stop-color="white" stop-opacity="0"/>
-              <stop offset="50%"  stop-color="white" stop-opacity="0.26"/>
-              <stop offset="62%"  stop-color="white" stop-opacity="0"/>
-              <stop offset="100%" stop-color="white" stop-opacity="0"/>
-            </linearGradient>
-            <mask id="tm">
-              <rect width="220" height="148" rx="16" fill="#fff"/>
-              <circle cx="154" cy="0"   r="12" fill="#000"/>
-              <circle cx="154" cy="148" r="12" fill="#000"/>
-            </mask>
-          </defs>
-
-          <!-- Body -->
-          <rect width="220" height="148" rx="16" fill="url(#tg)" mask="url(#tm)"/>
-
-          <!-- Subtle inner border -->
-          <rect x="1" y="1" width="218" height="146" rx="15" fill="none"
-                stroke="rgba(255,255,255,0.08)" stroke-width="1" mask="url(#tm)"/>
-
-          <!-- Tear line -->
-          <line x1="154" y1="16" x2="154" y2="132"
-                stroke="rgba(0,0,0,.12)" stroke-width="1.5" stroke-dasharray="4 3"/>
-
-          <!-- Stub: event name slot -->
-          <rect x="162" y="32" width="46" height="6" rx="3" fill="rgba(0,0,0,0.12)"/>
-          <rect x="162" y="46" width="34" height="6" rx="3" fill="rgba(0,0,0,0.09)"/>
-
-          <!-- Main text -->
-          <text x="72" y="54"  text-anchor="middle" font-family="'Cabinet Grotesk',sans-serif"
-                font-size="15" font-weight="800" fill="rgba(0,0,0,.4)" letter-spacing="4">ADMIT</text>
-          <text x="72" y="78"  text-anchor="middle" font-family="'Cabinet Grotesk',sans-serif"
-                font-size="15" font-weight="800" fill="rgba(0,0,0,.4)" letter-spacing="4">ONE</text>
-          <text x="72" y="112" text-anchor="middle" font-size="10"
-                fill="rgba(0,0,0,.15)" letter-spacing="4">&#9733; &#9733; &#9733;</text>
-
-          <!-- Serial number rotated in stub -->
-          <text transform="rotate(90 186 74)" x="186" y="74" text-anchor="middle"
-                font-family="monospace" font-size="7" fill="rgba(0,0,0,0.12)">No. 01071982</text>
-
-          <!-- Shine overlay — GSAP sweeps x from -260 to 260 -->
-          <rect class="ticket-shine" x="-260" y="0" width="260" height="148"
-                fill="url(#shine-grad)" mask="url(#tm)" rx="16"/>
-        </svg>
+        <img src="/image/tiximo.jpg" alt="Tiximo ticket" class="ticket-img" />
+        <div class="ticket-shine-overlay"></div>
       </div>
     </div>
 
     <div class="hero-center" id="hero-center">
       <h1 class="hero-wordmark" id="hero-wordmark">TIXIMO</h1>
-
       <p class="hero-sub" id="hero-sub">
         Events near you, found and booked<br />without leaving your chat app.
       </p>
@@ -83,25 +57,115 @@
       <span class="hero-scroll-label">Scroll</span>
       <div class="hero-scroll-bar"></div>
     </div>
+
+    <!-- ── Portal vignette — darkens edges during ticket zoom ── -->
+    <div class="hero-portal-mask" id="hero-portal-mask" aria-hidden="true"></div>
+
   </div>
+
+  <!-- ── Concert crowd silhouette — fixed to viewport bottom while hero is active ── -->
+  <svg class="hero-crowd" id="hero-crowd" viewBox="0 0 1440 220" xmlns="http://www.w3.org/2000/svg"
+       preserveAspectRatio="xMidYMid meet" aria-hidden="true">
+    <defs>
+      <linearGradient id="crowd-grad" x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0%"   stop-color="#040404" stop-opacity="0"/>
+        <stop offset="28%"  stop-color="#040404" stop-opacity="0.55"/>
+        <stop offset="58%"  stop-color="#040404" stop-opacity="0.92"/>
+        <stop offset="100%" stop-color="#040404" stop-opacity="1"/>
+      </linearGradient>
+    </defs>
+    <path fill="url(#crowd-grad)" d="
+      M 0 220 L 0 162
+      L 68 162 L 68 125 L 48 65 Q 38 8 60 2 L 82 58 Q 102 42 120 36 Q 138 42 158 58 L 180 2 Q 202 8 192 65 L 172 125 L 170 162
+      L 250 162 Q 260 145 268 118 Q 276 82 280 72 Q 290 56 300 72 Q 304 82 312 118 Q 320 145 330 162
+      L 388 162 L 388 125 L 368 65 Q 358 8 380 2 L 402 58 Q 422 42 440 36 Q 458 42 478 58 L 500 2 Q 522 8 512 65 L 492 125 L 490 162
+      L 580 162 Q 590 145 598 118 Q 606 82 610 72 Q 620 56 630 72 Q 634 82 642 118 Q 650 145 660 162
+      L 748 162 L 748 125 L 728 65 Q 718 8 740 2 L 762 58 Q 782 42 800 36 Q 818 42 838 58 L 860 2 Q 882 8 872 65 L 852 125 L 850 162
+      L 940 162 Q 950 145 958 118 Q 966 82 970 72 Q 980 56 990 72 Q 994 82 1002 118 Q 1010 145 1020 162
+      L 1108 162 L 1108 125 L 1088 65 Q 1078 8 1100 2 L 1122 58 Q 1142 42 1160 36 Q 1178 42 1198 58 L 1220 2 Q 1242 8 1232 65 L 1212 125 L 1210 162
+      L 1310 162 Q 1320 145 1328 118 Q 1336 82 1340 72 Q 1350 56 1360 72 Q 1364 82 1372 118 Q 1380 145 1440 162
+      L 1440 220 Z"/>
+  </svg>
 </section>
 
 <style>
   .hero {
     position: relative;
-    height: 260vh;
+    height: 135vh;
     background: var(--bg);
   }
 
-  .hero-canvas {
+  /* ── Concert spotlight beams ── */
+  .hero-beams {
     position: fixed;
     inset: 0;
-    width: 100%;
-    height: 100%;
+    z-index: 0;
+    pointer-events: none;
+    overflow: hidden;
+  }
+
+  .beam {
+    position: absolute;
+    top: -80px;
+    width: 200px;
+    height: 110vh;
+    transform-origin: top center;
+    filter: blur(45px);
+    opacity: 0;
+    animation: beam-in 2s ease forwards;
+  }
+
+  @keyframes beam-in { to { opacity: 1; } }
+
+  .beam-1 {
+    left: 8%;
+    transform: rotate(-16deg);
+    background: linear-gradient(to bottom, rgba(255, 107, 0, 0.20) 0%, rgba(255, 107, 0, 0.05) 50%, transparent 100%);
+    animation-delay: 0.3s;
+    animation: beam-in 2s ease 0.3s forwards, beam-sway-1 15s ease-in-out 2.5s infinite;
+  }
+  .beam-2 {
+    left: calc(50% - 100px);
+    transform: rotate(-1deg);
+    background: linear-gradient(to bottom, rgba(255, 255, 255, 0.06) 0%, rgba(255, 255, 255, 0.015) 45%, transparent 100%);
+    width: 260px;
+    animation: beam-in 2s ease 0.7s forwards, beam-sway-2 20s ease-in-out 2.5s infinite;
+  }
+  .beam-3 {
+    right: 14%;
+    transform: rotate(12deg);
+    background: linear-gradient(to bottom, rgba(0, 229, 255, 0.14) 0%, rgba(0, 229, 255, 0.03) 50%, transparent 100%);
+    animation: beam-in 2s ease 1.0s forwards, beam-sway-3 17s ease-in-out 2.5s infinite;
+  }
+  .beam-4 {
+    right: 3%;
+    transform: rotate(22deg);
+    background: linear-gradient(to bottom, rgba(255, 45, 107, 0.10) 0%, rgba(255, 45, 107, 0.02) 45%, transparent 100%);
+    animation: beam-in 2s ease 1.3s forwards, beam-sway-1 22s ease-in-out 2.5s infinite reverse;
+  }
+
+  @keyframes beam-sway-1 {
+    0%,100% { transform: rotate(-16deg); }
+    50%     { transform: rotate(-11deg); }
+  }
+  @keyframes beam-sway-2 {
+    0%,100% { transform: rotate(-1deg); }
+    50%     { transform: rotate(4deg); }
+  }
+  @keyframes beam-sway-3 {
+    0%,100% { transform: rotate(12deg); }
+    50%     { transform: rotate(7deg); }
+  }
+
+  /* ── Canvas ── */
+  .hero-canvas {
+    position: fixed;
+    inset: 0; width: 100%; height: 100%;
     z-index: 0;
     pointer-events: none;
   }
 
+  /* ── Stage ── */
   .hero-stage {
     position: sticky;
     top: 0;
@@ -113,66 +177,157 @@
     z-index: 1;
     padding: 0 28px;
     overflow: hidden;
-    /* Enables 3D perspective for all child transforms */
     perspective: 1400px;
   }
 
-  /* ── Ticket wrapper: scroll-driven transforms live here ── */
-  .hero-ticket-wrap {
+  /* ── Tunnel ── */
+  .hero-tunnel {
     position: absolute;
-    left: 50%;
-    top: 46%;
-    z-index: 2;
+    inset: 0;
+    z-index: 0;
     pointer-events: none;
-    opacity: 0;
-    /* GSAP sets xPercent: -50, yPercent: -50 for centering */
+    overflow: hidden;
   }
 
-  /* ── Ticket inner: mouse tilt + idle float + glow ── */
+  .tunnel-grid {
+    position: absolute;
+    inset: -55% -15%;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    gap: 10px;
+    transform: perspective(560px) rotateX(20deg);
+    transform-origin: 50% 58%;
+  }
+
+  /* Tunnel text — uses centralized color tokens */
+  .tunnel-row {
+    font-family: var(--font-tunnel);
+    font-size: 14vw;
+    font-weight: 400;
+    line-height: 0.84;
+    white-space: nowrap;
+    letter-spacing: -2px;
+    text-transform: uppercase;
+    color: var(--a15);
+    user-select: none;
+  }
+
+  .r2 { font-size: 7.5vw;  color: var(--a2-10); }
+  .r3 { font-size: 21vw;   color: var(--a20); letter-spacing: 6px; }
+  .r4 { font-size: 7vw;    color: var(--c10); }
+  .r5 { font-size: 6vw;    color: var(--m10); }
+
+  .tunnel-mask {
+    position: absolute;
+    pointer-events: none;
+  }
+  .mask-top    { inset: 0 0 auto; height: 28%; background: linear-gradient(to bottom, var(--bg) 0%, transparent 100%); }
+  .mask-bottom { inset: auto 0 0; height: 30%; background: linear-gradient(to top, var(--bg) 0%, transparent 100%); }
+  .mask-left   { inset: 0 auto 0 0; width: 10%; background: linear-gradient(to right, var(--bg) 0%, transparent 100%); }
+  .mask-right  { inset: 0 0 0 auto; width: 10%; background: linear-gradient(to left,  var(--bg) 0%, transparent 100%); }
+
+  /* Center vignette — keeps wordmark readable while letting tunnel show through */
+  .mask-center {
+    inset: 5% 10%;
+    background: radial-gradient(ellipse 80% 70% at 50% 50%,
+      rgba(4, 4, 4, 0.80) 0%,
+      rgba(4, 4, 4, 0.62) 30%,
+      rgba(4, 4, 4, 0.32) 60%,
+      transparent 100%);
+  }
+
+  /* ── Portal vignette ── */
+  .hero-portal-mask {
+    position: absolute;
+    inset: 0;
+    z-index: 3;
+    pointer-events: none;
+    opacity: 0;
+    background: radial-gradient(ellipse 55% 65% at 50% 50%,
+      transparent 0%, rgba(4,4,4,0.92) 100%);
+  }
+
+  /* ── Ticket ── */
+  .hero-ticket-wrap {
+    position: absolute;
+    left: 50%; top: 46%;
+    z-index: 4;
+    pointer-events: none;
+    opacity: 0;
+  }
+
   .hero-ticket {
-    width: clamp(100px, 15vw, 170px);
+    width: clamp(180px, 22vw, 280px);
     will-change: transform;
-    filter: drop-shadow(0 18px 52px rgba(212, 88, 58, 0.28));
-    animation: ticket-glow 3.8s ease-in-out infinite;
+    position: relative;
+    border-radius: 18px;
+    overflow: hidden;
+    animation: ticket-glow 4s ease-in-out infinite;
   }
 
   @keyframes ticket-glow {
-    0%, 100% { filter: drop-shadow(0 18px 52px rgba(212, 88, 58, 0.22)); }
-    50%       { filter: drop-shadow(0 22px 72px rgba(212, 88, 58, 0.50)); }
+    0%,100% { box-shadow: 0 18px 60px rgba(255,107,0,0.35), 0 0 0 1px rgba(255,107,0,0.15); }
+    50%     { box-shadow: 0 24px 90px rgba(255,107,0,0.60), 0 0 0 1px rgba(255,170,60,0.30); }
   }
 
-  .hero-ticket svg {
-    width: 100%;
-    height: auto;
+  .ticket-img {
+    width: 100%; height: auto;
     display: block;
+    border-radius: 18px;
   }
 
-  /* ── Text center ── */
+  .ticket-shine-overlay {
+    position: absolute;
+    inset: 0;
+    border-radius: 18px;
+    background: linear-gradient(115deg, transparent 30%, rgba(255,255,255,0.18) 50%, transparent 70%);
+    background-size: 200% 200%;
+    background-position: -100% 0;
+    pointer-events: none;
+    animation: shine-sweep 5s ease-in-out 2.5s infinite;
+  }
+
+  @keyframes shine-sweep {
+    0%  { background-position: -100% 0; opacity: 0; }
+    10% { opacity: 1; }
+    50% { background-position: 200% 0; }
+    51% { opacity: 0; }
+    100%{ background-position: 200% 0; opacity: 0; }
+  }
+
+  /* ── Hero center text ── */
   .hero-center {
     position: relative;
     display: flex;
     flex-direction: column;
     align-items: center;
-    gap: 32px;
+    gap: 24px;
     opacity: 0;
     z-index: 1;
   }
 
+  /* Boxing — bold poster font, readable at any size */
   .hero-wordmark {
-    font-family: var(--font-display);
-    font-weight: 600;
-    font-size: clamp(64px, 13vw, 180px);
-    letter-spacing: -4px;
-    line-height: 0.85;
-    color: var(--text);
+    font-family: var(--font-tunnel);
+    font-weight: 400;
+    font-size: clamp(72px, 14vw, 190px);
+    letter-spacing: 6px;
+    line-height: 0.9;
     text-align: center;
+    color: #ffffff;
+    /* Subtle text shadow for legibility over the tunnel */
+    text-shadow:
+      0 0 80px rgba(255, 107, 0, 0.5),
+      0 0 160px rgba(255, 107, 0, 0.2),
+      0 2px 4px rgba(0, 0, 0, 0.8);
   }
 
   .hero-sub {
     font-family: var(--font-body);
-    font-size: clamp(15px, 1.8vw, 20px);
+    font-size: clamp(15px, 1.8vw, 19px);
     font-weight: 400;
-    color: var(--dim);
+    color: rgba(255, 255, 255, 0.5);
     line-height: 1.7;
     text-align: center;
     max-width: 400px;
@@ -181,16 +336,16 @@
   .hero-actions {
     display: flex;
     gap: 12px;
-    margin-top: 12px;
+    margin-top: 8px;
     opacity: 0;
   }
 
   .hero-note {
     font-size: 11px;
-    color: var(--dim);
+    color: rgba(255, 255, 255, 0.3);
     letter-spacing: 1.5px;
     text-transform: uppercase;
-    margin-top: 6px;
+    margin-top: 4px;
     opacity: 0;
   }
 
@@ -209,24 +364,38 @@
     font-size: 10px;
     letter-spacing: 2.5px;
     text-transform: uppercase;
-    color: var(--dim);
+    color: rgba(255, 255, 255, 0.3);
   }
 
   .hero-scroll-bar {
     width: 1px;
     height: 32px;
-    background: linear-gradient(to bottom, var(--dim), transparent);
+    background: linear-gradient(to bottom, var(--accent-2), transparent);
     animation: bar-pulse 3s ease-in-out infinite;
   }
 
   @keyframes bar-pulse {
-    0%, 100% { opacity: 0.3; transform: scaleY(0.4); }
-    50%       { opacity: 0.8; transform: scaleY(1); }
+    0%,100% { opacity: 0.3; transform: scaleY(0.4); }
+    50%     { opacity: 1; transform: scaleY(1); }
+  }
+
+  /* ── Crowd silhouette — fixed so it always sits at viewport bottom ── */
+  .hero-crowd {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    height: clamp(140px, 15.3vw, 220px);
+    z-index: 9; /* above hero-stage (z:1) and portal-mask (z:3), below nav */
+    pointer-events: none;
+    filter: drop-shadow(0 -10px 24px rgba(255, 107, 0, 0.35))
+            drop-shadow(0 -4px 8px rgba(255, 45, 107, 0.15));
   }
 
   @media (max-width: 600px) {
-    .hero-wordmark { letter-spacing: -2px; }
-    .hero-ticket   { width: 86px; }
+    .hero-wordmark { letter-spacing: 3px; }
+    .hero-ticket   { width: 120px; }
+    .beam          { opacity: 0.5 !important; }
   }
 </style>
 
@@ -237,157 +406,130 @@
   gsap.registerPlugin(ScrollTrigger)
 
   // ─── Particles ───────────────────────────────────────────────────────────────
-  const canvas = document.getElementById('hero-canvas') as HTMLCanvasElement
-  if (canvas) {
-    const scene = new THREE.Scene()
-    let w = canvas.clientWidth, h = canvas.clientHeight
-    const cam = new THREE.PerspectiveCamera(55, w / h, 0.1, 80)
-    cam.position.z = 28
-    const gl = new THREE.WebGLRenderer({ canvas, alpha: true, antialias: false })
-    gl.setSize(w, h)
-    gl.setPixelRatio(Math.min(devicePixelRatio, 2))
+  try {
+    const canvas = document.getElementById('hero-canvas') as HTMLCanvasElement
+    if (canvas) {
+      const scene = new THREE.Scene()
+      let w = canvas.clientWidth  || window.innerWidth
+      let h = canvas.clientHeight || window.innerHeight
+      const cam = new THREE.PerspectiveCamera(55, w / h, 0.1, 80)
+      cam.position.z = 28
+      const gl = new THREE.WebGLRenderer({ canvas, alpha: true, antialias: false })
+      gl.setSize(w, h)
+      gl.setPixelRatio(Math.min(devicePixelRatio, 2))
 
-    const tex = (() => {
-      const c = document.createElement('canvas'); c.width = c.height = 64
-      const x = c.getContext('2d')!
-      const g = x.createRadialGradient(32, 32, 0, 32, 32, 32)
-      g.addColorStop(0, 'rgba(255,255,255,1)')
-      g.addColorStop(.3, 'rgba(255,255,255,.4)')
-      g.addColorStop(1, 'rgba(255,255,255,0)')
-      x.fillStyle = g; x.fillRect(0, 0, 64, 64)
-      return new THREE.CanvasTexture(c)
-    })()
+      const tex = (() => {
+        const c = document.createElement('canvas'); c.width = c.height = 64
+        const x = c.getContext('2d')!
+        const g = x.createRadialGradient(32,32,0,32,32,32)
+        g.addColorStop(0,'rgba(255,255,255,1)'); g.addColorStop(.3,'rgba(255,255,255,.4)'); g.addColorStop(1,'rgba(255,255,255,0)')
+        x.fillStyle = g; x.fillRect(0,0,64,64)
+        return new THREE.CanvasTexture(c)
+      })()
 
-    const N = innerWidth < 768 ? 60 : 120
-    const pos = new Float32Array(N * 3), col = new Float32Array(N * 3)
-    const vy = new Float32Array(N), vx = new Float32Array(N)
-    const pal = [
-      [.83, .35, .23],
-      [.77, .57, .35],
-      [.91, .77, .40],
-      [.65, .45, .28],
-      [.95, .85, .55],
-    ]
-    for (let i = 0; i < N; i++) {
-      pos[i*3]=(Math.random()-.5)*55; pos[i*3+1]=(Math.random()-.5)*40; pos[i*3+2]=(Math.random()-.5)*20
-      const c = pal[Math.random() * pal.length | 0]; col[i*3]=c[0]; col[i*3+1]=c[1]; col[i*3+2]=c[2]
-      vy[i] = Math.random() * .015 + .004; vx[i] = (Math.random() - .5) * .008
-    }
-    const geo = new THREE.BufferGeometry()
-    geo.setAttribute('position', new THREE.BufferAttribute(pos, 3))
-    geo.setAttribute('color',    new THREE.BufferAttribute(col, 3))
-    const mat = new THREE.PointsMaterial({
-      size: innerWidth < 768 ? .25 : .35, map: tex, vertexColors: true,
-      transparent: true, opacity: .4, blending: THREE.AdditiveBlending, depthWrite: false
-    })
-    const pts = new THREE.Points(geo, mat); scene.add(pts)
-    let vis = true
-    function tick() {
-      if (!vis) return; requestAnimationFrame(tick)
-      const p = geo.attributes.position.array as Float32Array
-      for (let i = 0; i < N; i++) {
-        p[i*3] += vx[i]; p[i*3+1] += vy[i]
-        if (p[i*3+1] > 22) { p[i*3+1] = -22; p[i*3] = (Math.random() - .5) * 55 }
+      const N = innerWidth < 768 ? 50 : 90
+      const pos = new Float32Array(N*3), col = new Float32Array(N*3)
+      const vy = new Float32Array(N), vx = new Float32Array(N)
+      // amber, hot pink, cyan — match new palette
+      const pal = [[1,0.42,0],[1,0.67,0.24],[1,0.18,0.42],[0,0.9,1],[1,0.85,0]]
+      for (let i=0;i<N;i++) {
+        pos[i*3]=(Math.random()-.5)*55; pos[i*3+1]=(Math.random()-.5)*40; pos[i*3+2]=(Math.random()-.5)*20
+        const c=pal[Math.random()*pal.length|0]; col[i*3]=c[0]; col[i*3+1]=c[1]; col[i*3+2]=c[2]
+        vy[i]=Math.random()*.015+.004; vx[i]=(Math.random()-.5)*.008
       }
-      geo.attributes.position.needsUpdate = true
-      pts.rotation.y += .00008
-      gl.render(scene, cam)
+      const geo = new THREE.BufferGeometry()
+      geo.setAttribute('position', new THREE.BufferAttribute(pos,3))
+      geo.setAttribute('color', new THREE.BufferAttribute(col,3))
+      const mat = new THREE.PointsMaterial({
+        size: innerWidth<768?.22:.30, map:tex, vertexColors:true,
+        transparent:true, opacity:.28, blending:THREE.AdditiveBlending, depthWrite:false
+      })
+      const pts = new THREE.Points(geo,mat); scene.add(pts)
+      let vis = true
+      function tick() {
+        if (!vis) return; requestAnimationFrame(tick)
+        const p = geo.attributes.position.array as Float32Array
+        for (let i=0;i<N;i++) {
+          p[i*3]+=vx[i]; p[i*3+1]+=vy[i]
+          if (p[i*3+1]>22) { p[i*3+1]=-22; p[i*3]=(Math.random()-.5)*55 }
+        }
+        geo.attributes.position.needsUpdate=true; pts.rotation.y+=.00006; gl.render(scene,cam)
+      }
+      tick()
+      new IntersectionObserver(e=>{ vis=e[0].isIntersecting; if(vis)tick() }).observe(canvas)
+      addEventListener('resize',()=>{ w=canvas.clientWidth||innerWidth; h=canvas.clientHeight||innerHeight; cam.aspect=w/h; cam.updateProjectionMatrix(); gl.setSize(w,h) },{passive:true})
     }
-    tick()
-    new IntersectionObserver(e => { vis = e[0].isIntersecting; if (vis) tick() }).observe(canvas)
-    addEventListener('resize', () => {
-      w = canvas.clientWidth; h = canvas.clientHeight
-      cam.aspect = w / h; cam.updateProjectionMatrix(); gl.setSize(w, h)
-    }, { passive: true })
+  } catch(e) {
+    console.warn('[Tiximo] Three.js particles failed:', e)
   }
 
-  // ─── Page load: text elements ────────────────────────────────────────────────
+  // ─── Tunnel crawl (scroll-driven Star Wars effect) ───────────────────────────
+  gsap.to('.tunnel-grid', {
+    y: '-38%', ease: 'none',
+    scrollTrigger: { trigger: '#hero', start: 'top top', end: 'bottom bottom', scrub: 1.5 },
+  })
+
+  // ─── Page load entrance ───────────────────────────────────────────────────────
   const tl = gsap.timeline({ defaults: { ease: 'power3.out' } })
   tl.set('#hero-center', { opacity: 1 })
-  tl.fromTo('#hero-wordmark', { y: 50, opacity: 0, scale: .94 }, { y: 0, opacity: 1, scale: 1, duration: 1.2 }, .15)
-  tl.fromTo('#hero-sub',     { y: 20, opacity: 0 }, { y: 0, opacity: 1, duration: .8 }, .5)
-  tl.fromTo('#hero-actions', { y: 14, opacity: 0 }, { y: 0, opacity: 1, duration: .7 }, .65)
-  tl.fromTo('#hero-note',    { opacity: 0 },        { opacity: 1, duration: .6 }, .8)
-  tl.fromTo('#hero-scroll',  { opacity: 0 },        { opacity: 1, duration: .6 }, 1)
+  tl.fromTo('#hero-wordmark', { y:50, opacity:0, scale:.94 }, { y:0, opacity:1, scale:1, duration:1.2 }, .15)
+  tl.fromTo('#hero-sub',     { y:20, opacity:0 }, { y:0, opacity:1, duration:.8 }, .5)
+  tl.fromTo('#hero-actions', { y:14, opacity:0 }, { y:0, opacity:1, duration:.7 }, .65)
+  tl.fromTo('#hero-note',    { opacity:0 }, { opacity:1, duration:.6 }, .8)
+  tl.fromTo('#hero-scroll',  { opacity:0 }, { opacity:1, duration:.6 }, 1)
 
-  // ─── Ticket: setup centering via GSAP (keeps transform clean) ────────────────
-  gsap.set('#hero-ticket-wrap', { xPercent: -50, yPercent: -50, transformPerspective: 1400 })
-  // Inner element gets its own perspective for the mouse-tilt rotateX/Y
-  gsap.set('#hero-ticket', { transformPerspective: 900 })
+  // ─── Ticket ───────────────────────────────────────────────────────────────────
+  gsap.set('#hero-ticket-wrap', { xPercent:-50, yPercent:-50, transformPerspective:1400 })
+  gsap.set('#hero-ticket', { transformPerspective:900 })
 
-  // ─── Scroll: 3-phase animation ────────────────────────────────────────────────
-  //  Phase 1 (0 → 50%):  3D tumble rise — card flips to face you as it comes up
-  //  Phase 2 (50→ 68%):  settle with slight overshoot
-  //  Phase 3 (76→100%):  zoom toward viewer + fade (like walking past it)
   const st = gsap.timeline({
-    scrollTrigger: { trigger: '#hero', start: 'top top', end: 'bottom bottom', scrub: 1.5 }
+    scrollTrigger: { trigger:'#hero', start:'top top', end:'bottom bottom', scrub:1.5 }
   })
 
+  // ── Phase 1: Ticket rises from below and locks to center (0 → 40%) ──
   st.fromTo('#hero-ticket-wrap',
-    { y: '130vh', rotateX: 62, rotation: 18, scale: 0.28, opacity: 0 },
-    { y: '0vh',   rotateX:  0, rotation: -5, scale: 1.06, opacity: 1, ease: 'power2.out', duration: 0.5 },
-    0
-  )
-  st.to('#hero-ticket-wrap',
-    { y: 0, rotation: -7, scale: 1, ease: 'power1.inOut', duration: 0.18 },
-    0.5
-  )
-  st.to('#hero-ticket-wrap',
-    { y: -70, scale: 1.24, opacity: 0, ease: 'power2.in', duration: 0.24 },
-    0.76
-  )
-  st.to('#hero-scroll', { opacity: 0, duration: 0.08 }, 0.04)
+    { y:'120vh', rotateX:52, rotation:10, scale:0.22, opacity:0 },
+    { y:0, rotateX:0, rotation:0, scale:1, opacity:1, ease:'power2.out', duration:0.40 }, 0)
 
-  // ─── Mouse tilt: 3D perspective on inner element (doesn't conflict with scroll) ─
-  const isMobile = matchMedia('(hover: none)').matches
-  if (!isMobile) {
+  // Hero UI fades as ticket settles
+  st.to('#hero-scroll',  { opacity:0, duration:0.06 }, 0.04)
+  st.to('#hero-note',    { opacity:0, duration:0.12 }, 0.26)
+  st.to('#hero-actions', { opacity:0, duration:0.14 }, 0.28)
+  st.to('#hero-center',  { opacity:0, y:-20, duration:0.18 }, 0.32)
+
+  // Crowd fades out as portal begins
+  st.to('#hero-crowd', { opacity:0, duration:0.16 }, 0.36)
+
+  // ── Phase 2: Portal zoom — you enter the ticket (46% → 93%) ──
+  st.to('#hero-portal-mask', { opacity:1, duration:0.22 }, 0.46)
+  st.to('#hero-ticket-wrap',
+    { scale:22, rotateX:-5, ease:'power2.in', duration:0.47 }, 0.46)
+
+  // Snap to black at the end — next section takes over
+  st.to(['#hero-ticket-wrap', '#hero-portal-mask'], { opacity:0, duration:0.07 }, 0.93)
+
+  // Hide crowd completely once hero leaves viewport (don't show over other sections)
+  ScrollTrigger.create({
+    trigger: '#hero',
+    start: 'bottom bottom',
+    onLeave:     () => gsap.set('#hero-crowd', { visibility: 'hidden' }),
+    onEnterBack: () => gsap.set('#hero-crowd', { visibility: 'visible' }),
+  })
+
+  // ─── Mouse tilt ───────────────────────────────────────────────────────────────
+  if (!matchMedia('(hover: none)').matches) {
     window.addEventListener('mousemove', (e) => {
-      const nx = (e.clientX / window.innerWidth  - 0.5) * 2  // –1 → 1
-      const ny = (e.clientY / window.innerHeight - 0.5) * 2  // –1 → 1
-      gsap.to('#hero-ticket', {
-        rotateY:  nx * 17,
-        rotateX: -ny * 11,
-        duration: 0.55,
-        ease: 'power2.out',
-        overwrite: 'auto',
-      })
-    }, { passive: true })
-
-    // Reset tilt when cursor leaves viewport
+      const nx=(e.clientX/innerWidth-.5)*2, ny=(e.clientY/innerHeight-.5)*2
+      gsap.to('#hero-ticket', { rotateY:nx*17, rotateX:-ny*11, duration:.55, ease:'power2.out', overwrite:'auto' })
+    }, { passive:true })
     document.addEventListener('mouseleave', () => {
-      gsap.to('#hero-ticket', { rotateX: 0, rotateY: 0, duration: 1, ease: 'power2.out' })
+      gsap.to('#hero-ticket', { rotateX:0, rotateY:0, duration:1, ease:'power2.out' })
     })
   }
 
-  // ─── Shine sweep: triggers when ticket is settled (~45% scroll progress) ────────
-  let shineRunning = false
-  function runShine() {
-    shineRunning = true
-    gsap.fromTo('.ticket-shine',
-      { attr: { x: -260 } },
-      {
-        attr: { x: 260 },
-        duration: 0.72,
-        ease: 'power1.inOut',
-        onComplete: () => gsap.delayedCall(4.8, runShine),
-      }
-    )
-  }
-
   ScrollTrigger.create({
-    trigger: '#hero',
-    start: 'top top',
-    end: 'bottom bottom',
-    onUpdate: (self) => {
-      if (!shineRunning && self.progress >= 0.44) runShine()
-    },
-  })
-
-  // ─── Fade particles when leaving hero ────────────────────────────────────────
-  ScrollTrigger.create({
-    trigger: '#hero',
-    start: 'bottom 100%',
-    onLeave:     () => gsap.to('#hero-canvas', { opacity: 0, duration: .4 }),
-    onEnterBack: () => gsap.to('#hero-canvas', { opacity: 1, duration: .4 }),
+    trigger:'#hero', start:'bottom 100%',
+    onLeave:     ()=>gsap.to('#hero-canvas',{opacity:0,duration:.4}),
+    onEnterBack: ()=>gsap.to('#hero-canvas',{opacity:1,duration:.4}),
   })
 </script>

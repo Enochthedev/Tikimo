@@ -1,0 +1,88 @@
+---
+interface Props {
+  /** Text items to repeat */
+  items?: string[]
+  /** Dark (text on surface) or accent (text on accent bg) */
+  variant?: 'dark' | 'accent'
+  /** Speed in seconds for one loop (default 38) */
+  speed?: number
+}
+
+const {
+  items = ['FIND YOUR SCENE', 'TONIGHT', 'NO DOWNLOAD', 'JUST CHAT', 'BOOK IT', 'TIXIMO', 'NEAR YOU'],
+  variant = 'dark',
+  speed = 38,
+} = Astro.props
+
+// Duplicate for seamless loop
+const all = [...items, ...items]
+const sep = '✦'
+---
+<div class={`mq mq-${variant}`} aria-hidden="true">
+  <div class="mq-track" style={`--speed: ${speed}s`}>
+    {all.map((item, i) => (
+      <>
+        <span class="mq-item">{item}</span>
+        {i < all.length - 1 && <span class="mq-sep">{sep}</span>}
+      </>
+    ))}
+  </div>
+</div>
+
+<style>
+  .mq {
+    overflow: hidden;
+    border-top: 1px solid var(--border);
+    border-bottom: 1px solid var(--border);
+  }
+
+  .mq-dark {
+    background: var(--surface);
+  }
+
+  .mq-accent {
+    background: var(--accent);
+    border-color: transparent;
+  }
+
+  .mq-track {
+    display: flex;
+    align-items: center;
+    width: max-content;
+    padding: 14px 0;
+    gap: 0;
+    animation: mq-scroll var(--speed, 38s) linear infinite;
+    white-space: nowrap;
+  }
+
+  .mq:hover .mq-track {
+    animation-play-state: paused;
+  }
+
+  @keyframes mq-scroll {
+    from { transform: translateX(0); }
+    to   { transform: translateX(-50%); }
+  }
+
+  .mq-item {
+    font-family: var(--font-body);
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    padding: 0 28px;
+  }
+
+  .mq-dark  .mq-item { color: var(--dim); }
+  .mq-dark  .mq-item:hover { color: var(--text); transition: color 0.2s; }
+  .mq-accent .mq-item { color: rgba(255,255,255,0.85); }
+
+  .mq-sep {
+    color: var(--accent-2);
+    font-size: 8px;
+    flex-shrink: 0;
+  }
+  .mq-accent .mq-sep {
+    color: rgba(255,255,255,0.4);
+  }
+</style>

@@ -7,14 +7,27 @@
         <span class="section-label">Explore</span>
         <h2 class="section-title">The energy map.</h2>
         <p class="map-body">
-          See which parts of the city are heating up. Ghost zones show where demand exists but nothing's been booked yet.
+          See which parts of the city are heating up tonight. Ghost zones show where demand is high but nothing's been booked yet.
         </p>
         <a href="https://t.me/tiximo_bot" class="btn btn-primary">See it live</a>
       </div>
 
       <div class="map-visual" data-map-card>
-        <canvas id="map-canvas" width="900" height="440"></canvas>
-        <div class="map-badge"><span class="live-dot"></span> Live tonight</div>
+        <canvas id="map-canvas" width="1000" height="520"></canvas>
+
+        <div class="map-overlay-badges">
+          <div class="map-badge-live"><span class="live-dot"></span>Live tonight</div>
+          <div class="map-badge-city">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z"/><circle cx="12" cy="10" r="3"/></svg>
+            London
+          </div>
+        </div>
+
+        <div class="map-legend">
+          <span class="legend-label">Low</span>
+          <div class="legend-bar"></div>
+          <span class="legend-label">High</span>
+        </div>
       </div>
     </div>
   </div>
@@ -22,35 +35,37 @@
 
 <style>
   .map-teaser {
-    background: var(--surface);
+    background: var(--bg);
     padding: 160px 0;
-    border-top: 1px solid var(--border);
-    border-bottom: 1px solid var(--border);
+    position: relative;
+    overflow: hidden;
+  }
+
+  .map-teaser::before {
+    content: '';
+    position: absolute;
+    bottom: -200px; left: -200px;
+    width: 500px; height: 500px;
+    background: radial-gradient(circle, rgba(34,211,238,0.05) 0%, transparent 70%);
+    pointer-events: none;
   }
 
   .map-layout {
     display: grid;
-    grid-template-columns: 1fr 1.4fr;
+    grid-template-columns: 1fr 1.5fr;
     gap: 64px;
     align-items: center;
+    position: relative;
+    z-index: 1;
   }
 
   @media (max-width: 860px) {
-    .map-layout {
-      grid-template-columns: 1fr;
-      gap: 48px;
-    }
+    .map-layout { grid-template-columns: 1fr; gap: 48px; }
   }
 
-  .map-text {
-    opacity: 0;
-    transform: translateY(24px);
-  }
+  .map-text { opacity: 0; transform: translateY(24px); }
 
-  .section-title {
-    color: var(--text);
-    margin-bottom: 20px;
-  }
+  .section-title { color: var(--text); margin-bottom: 20px; }
 
   .map-body {
     font-size: 16px;
@@ -60,6 +75,7 @@
     max-width: 360px;
   }
 
+  /* ── Canvas card ── */
   .map-visual {
     position: relative;
     border: 1px solid var(--border);
@@ -67,6 +83,19 @@
     overflow: hidden;
     opacity: 0;
     transform: translateY(24px);
+    background: #000;
+  }
+
+  /* Gradient border glow */
+  .map-visual::before {
+    content: '';
+    position: absolute;
+    inset: -1px;
+    border-radius: calc(var(--radius) + 1px);
+    background: linear-gradient(135deg, rgba(124,58,237,0.4), rgba(34,211,238,0.2), transparent 60%);
+    z-index: 3;
+    pointer-events: none;
+    mix-blend-mode: screen;
   }
 
   #map-canvas {
@@ -75,151 +104,369 @@
     height: auto;
   }
 
-  .map-badge {
+  /* ── Badges ── */
+  .map-overlay-badges {
     position: absolute;
-    top: 16px;
-    left: 16px;
-    background: rgba(11, 11, 13, 0.85);
-    border: 1px solid var(--border);
-    border-radius: 100px;
-    padding: 6px 14px;
-    font-size: 12px;
-    font-weight: 600;
-    color: var(--text);
-    backdrop-filter: blur(8px);
+    top: 14px;
+    left: 14px;
+    display: flex;
+    gap: 8px;
+    z-index: 4;
+  }
+
+  .map-badge-live,
+  .map-badge-city {
     display: flex;
     align-items: center;
-    gap: 8px;
+    gap: 6px;
+    padding: 5px 12px;
+    border-radius: 100px;
+    font-size: 11px;
+    font-weight: 600;
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    letter-spacing: 0.5px;
+  }
+
+  .map-badge-live {
+    background: rgba(0,0,0,0.7);
+    border: 1px solid rgba(124,58,237,0.3);
+    color: var(--text);
+  }
+
+  .map-badge-city {
+    background: rgba(0,0,0,0.6);
+    border: 1px solid rgba(255,255,255,0.08);
+    color: var(--dim);
   }
 
   .live-dot {
-    width: 6px;
-    height: 6px;
+    width: 6px; height: 6px;
     border-radius: 50%;
-    background: var(--accent);
-    box-shadow: 0 0 6px var(--accent);
+    background: var(--cyan);
+    box-shadow: 0 0 8px var(--cyan);
     animation: blink-dot 2s ease-in-out infinite;
+    flex-shrink: 0;
   }
 
   @keyframes blink-dot {
-    0%, 100% { opacity: 1; }
-    50% { opacity: 0.25; }
+    0%,100% { opacity: 1; }
+    50%     { opacity: 0.2; }
+  }
+
+  /* ── Legend ── */
+  .map-legend {
+    position: absolute;
+    bottom: 14px;
+    right: 14px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 6px 12px;
+    background: rgba(0,0,0,0.7);
+    border: 1px solid rgba(255,255,255,0.07);
+    border-radius: 100px;
+    backdrop-filter: blur(12px);
+    z-index: 4;
+  }
+
+  .legend-label {
+    font-size: 10px;
+    font-weight: 600;
+    color: var(--dim);
+    letter-spacing: 1px;
+    text-transform: uppercase;
+  }
+
+  .legend-bar {
+    width: 80px;
+    height: 6px;
+    border-radius: 3px;
+    background: linear-gradient(to right,
+      rgba(30, 27, 75, 0.6),
+      rgba(79, 70, 229, 0.8),
+      rgba(255, 107, 0, 1),
+      rgba(168, 85, 247, 1),
+      rgba(217, 70, 239, 1),
+      rgba(34, 211, 238, 1)
+    );
   }
 </style>
 
 <script>
   import { gsap } from 'gsap'
   import { ScrollTrigger } from 'gsap/ScrollTrigger'
-
   gsap.registerPlugin(ScrollTrigger)
 
   ScrollTrigger.create({
-    trigger: '[data-map-text]',
-    start: 'top 80%',
-    once: true,
-    onEnter: () => {
-      gsap.to('[data-map-text]', { opacity: 1, y: 0, duration: 0.9, ease: 'power2.out' })
-    },
+    trigger: '[data-map-text]', start: 'top 80%', once: true,
+    onEnter: () => gsap.to('[data-map-text]', { opacity:1, y:0, duration:0.9, ease:'power2.out' }),
   })
-
   ScrollTrigger.create({
-    trigger: '[data-map-card]',
-    start: 'top 80%',
-    once: true,
-    onEnter: () => {
-      gsap.to('[data-map-card]', { opacity: 1, y: 0, duration: 0.9, ease: 'power2.out', delay: 0.15 })
-    },
+    trigger: '[data-map-card]', start: 'top 80%', once: true,
+    onEnter: () => gsap.to('[data-map-card]', { opacity:1, y:0, duration:0.9, ease:'power2.out', delay:0.15 }),
   })
 
-  // ─── Canvas Heatmap ─────────────────────────────────────────────────────────
+  // ─── Canvas City Heatmap ──────────────────────────────────────────────────────
   const canvas = document.getElementById('map-canvas') as HTMLCanvasElement
   const ctx = canvas?.getContext('2d')
-
   if (ctx) {
-    const W = canvas.width
-    const H = canvas.height
 
-    const blobs = [
-      { x: 0.15, y: 0.35, r: 0.18, score: 0.9,  phase: 0 },
-      { x: 0.38, y: 0.55, r: 0.14, score: 0.6,  phase: 1.2 },
-      { x: 0.55, y: 0.25, r: 0.20, score: 0.85, phase: 0.4 },
-      { x: 0.70, y: 0.65, r: 0.12, score: 0.45, phase: 2.1 },
-      { x: 0.82, y: 0.30, r: 0.16, score: 0.72, phase: 0.9 },
-      { x: 0.28, y: 0.80, r: 0.10, score: 0.30, phase: 1.7 },
-      { x: 0.62, y: 0.50, r: 0.09, score: 0.55, phase: 3.0 },
-      { x: 0.88, y: 0.72, r: 0.13, score: 0.40, phase: 2.5 },
-    ]
+  const W = canvas.width, H = canvas.height
 
-    let animId: number
-    let t = 0
+  // ─── City grid data ───────────────────────────────────────────────────────────
+  // Major road x/y positions (as fractions)
+  const majX = [0, 0.10, 0.22, 0.36, 0.50, 0.63, 0.75, 0.86, 1.0]
+  const majY = [0, 0.15, 0.28, 0.42, 0.56, 0.70, 0.82, 1.0]
 
-    function draw() {
-      ctx.clearRect(0, 0, W, H)
+  // Minor subdivision (some blocks split further)
+  const minorSegs = [
+    // [x1f, y1f, x2f, y2f, axis] where axis=H for horizontal, V for vertical
+    { x: 0.16, y1: 0,    y2: 0.15,  axis: 'V' },
+    { x: 0.44, y1: 0.28, y2: 0.42,  axis: 'V' },
+    { x: 0.58, y1: 0.42, y2: 0.56,  axis: 'V' },
+    { x: 0.70, y1: 0.56, y2: 0.70,  axis: 'V' },
+    { x: 0.30, y1: 0.70, y2: 0.82,  axis: 'V' },
+    { y: 0.21, x1: 0,    x2: 0.22,  axis: 'H' },
+    { y: 0.35, x1: 0.36, x2: 0.63,  axis: 'H' },
+    { y: 0.49, x1: 0.63, x2: 1.0,   axis: 'H' },
+    { y: 0.63, x1: 0.10, x2: 0.36,  axis: 'H' },
+    { y: 0.76, x1: 0,    x2: 0.50,  axis: 'H' },
+  ]
 
-      ctx.fillStyle = '#0b0b0d'
-      ctx.fillRect(0, 0, W, H)
+  // Diagonal road (like a boulevard)
+  const diagonal = { x1:0.22, y1:0.28, x2:0.63, y2:0.70 }
 
-      // Subtle grid
-      ctx.strokeStyle = 'rgba(255,255,255,0.025)'
-      ctx.lineWidth = 1
-      const cols = 24, rows = 12
-      for (let i = 0; i <= cols; i++) {
-        const x = (i / cols) * W
-        ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, H); ctx.stroke()
+  // Heat sources — clusters of activity
+  const sources = [
+    { x:0.18, y:0.38, r:0.16, score:1.0,   phase:0   },  // hottest
+    { x:0.52, y:0.22, r:0.13, score:0.82,  phase:1.1 },
+    { x:0.74, y:0.55, r:0.18, score:0.88,  phase:0.5 },
+    { x:0.40, y:0.62, r:0.11, score:0.58,  phase:2.0 },
+    { x:0.82, y:0.28, r:0.09, score:0.45,  phase:1.7 },
+    { x:0.60, y:0.78, r:0.10, score:0.50,  phase:2.8 },
+    { x:0.10, y:0.72, r:0.08, score:0.35,  phase:0.9 },
+    { x:0.88, y:0.70, r:0.07, score:0.28,  phase:3.2 },
+    { x:0.30, y:0.12, r:0.08, score:0.42,  phase:1.4 },
+  ]
+
+  // Event pins (most active locations)
+  const pins = [
+    { x:0.18, y:0.38 },
+    { x:0.52, y:0.22 },
+    { x:0.74, y:0.55 },
+    { x:0.40, y:0.62 },
+    { x:0.82, y:0.28 },
+    { x:0.10, y:0.72 },
+  ]
+
+  // Block fill colors (very dark, slight color variance)
+  const blockPalette = [
+    '#05050e', '#060610', '#07070f', '#050510',
+    '#060611', '#040409', '#07070c',
+  ]
+
+  // ─── Draw functions ────────────────────────────────────────────────────────────
+  function drawBaseMap() {
+    // Background
+    ctx.fillStyle = '#020207'
+    ctx.fillRect(0, 0, W, H)
+
+    // Fill city blocks
+    for (let i = 0; i < majX.length - 1; i++) {
+      for (let j = 0; j < majY.length - 1; j++) {
+        const x1 = majX[i] * W + 2.5
+        const y1 = majY[j] * H + 2.5
+        const x2 = majX[i+1] * W - 2.5
+        const y2 = majY[j+1] * H - 2.5
+        ctx.fillStyle = blockPalette[(i * 3 + j) % blockPalette.length]
+        ctx.fillRect(x1, y1, x2 - x1, y2 - y1)
       }
-      for (let j = 0; j <= rows; j++) {
-        const y = (j / rows) * H
-        ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(W, y); ctx.stroke()
-      }
-
-      for (const blob of blobs) {
-        const pulse = 1 + 0.1 * Math.sin(t * 0.035 + blob.phase)
-        const bx = blob.x * W
-        const by = blob.y * H
-        const br = blob.r * Math.min(W, H) * pulse
-        const alpha = blob.score * (0.8 + 0.2 * Math.sin(t * 0.025 + blob.phase))
-
-        const grad = ctx.createRadialGradient(bx, by, 0, bx, by, br)
-
-        if (blob.score > 0.7) {
-          grad.addColorStop(0, `rgba(212, 88, 58, ${alpha * 0.75})`)
-          grad.addColorStop(0.4, `rgba(196, 145, 90, ${alpha * 0.4})`)
-          grad.addColorStop(0.8, `rgba(232, 196, 102, ${alpha * 0.12})`)
-          grad.addColorStop(1, 'rgba(212, 88, 58, 0)')
-        } else if (blob.score > 0.4) {
-          grad.addColorStop(0, `rgba(196, 145, 90, ${alpha * 0.6})`)
-          grad.addColorStop(0.5, `rgba(212, 88, 58, ${alpha * 0.25})`)
-          grad.addColorStop(1, 'rgba(196, 145, 90, 0)')
-        } else {
-          grad.addColorStop(0, `rgba(120, 90, 160, ${alpha * 0.4})`)
-          grad.addColorStop(0.5, `rgba(90, 70, 140, ${alpha * 0.15})`)
-          grad.addColorStop(1, 'rgba(90, 70, 140, 0)')
-        }
-
-        ctx.beginPath()
-        ctx.arc(bx, by, br, 0, Math.PI * 2)
-        ctx.fillStyle = grad
-        ctx.fill()
-
-        // Center dot
-        ctx.beginPath()
-        ctx.arc(bx, by, 2.5, 0, Math.PI * 2)
-        ctx.fillStyle = blob.score > 0.4 ? `rgba(232,196,102,${alpha})` : `rgba(160,120,220,${alpha * 0.7})`
-        ctx.fill()
-      }
-
-      t++
-      animId = requestAnimationFrame(draw)
     }
 
-    draw()
-
-    const obs = new IntersectionObserver((entries) => {
-      for (const e of entries) {
-        if (e.isIntersecting) { if (!animId) draw() }
-        else { cancelAnimationFrame(animId); animId = 0 }
+    // Minor road fills (subdivided blocks slightly lighter)
+    ctx.fillStyle = '#080812'
+    for (const seg of minorSegs) {
+      if (seg.axis === 'V') {
+        ctx.fillRect(seg.x! * W - 1, seg.y1! * H, 2, (seg.y2! - seg.y1!) * H)
       }
-    })
-    obs.observe(canvas)
+    }
+
+    // Major roads
+    ctx.strokeStyle = 'rgba(255, 170, 60, 0.22)'
+    ctx.lineWidth = 3
+    for (const x of majX) {
+      if (x === 0 || x === 1) continue
+      ctx.beginPath(); ctx.moveTo(x*W, 0); ctx.lineTo(x*W, H); ctx.stroke()
+    }
+    for (const y of majY) {
+      if (y === 0 || y === 1) continue
+      ctx.beginPath(); ctx.moveTo(0, y*H); ctx.lineTo(W, y*H); ctx.stroke()
+    }
+
+    // Minor roads (subdivisions)
+    ctx.strokeStyle = 'rgba(100, 90, 180, 0.12)'
+    ctx.lineWidth = 1
+    for (const seg of minorSegs) {
+      ctx.beginPath()
+      if (seg.axis === 'V') {
+        ctx.moveTo(seg.x! * W, seg.y1! * H)
+        ctx.lineTo(seg.x! * W, seg.y2! * H)
+      } else {
+        ctx.moveTo(seg.x1! * W, seg.y! * H)
+        ctx.lineTo(seg.x2! * W, seg.y! * H)
+      }
+      ctx.stroke()
+    }
+
+    // Diagonal boulevard
+    ctx.strokeStyle = 'rgba(255, 170, 60, 0.18)'
+    ctx.lineWidth = 2.5
+    ctx.beginPath()
+    ctx.moveTo(diagonal.x1*W, diagonal.y1*H)
+    ctx.lineTo(diagonal.x2*W, diagonal.y2*H)
+    ctx.stroke()
+
+    // Subtle intersection dots
+    ctx.fillStyle = 'rgba(255, 107, 0, 0.25)'
+    for (const x of majX.slice(1,-1)) {
+      for (const y of majY.slice(1,-1)) {
+        ctx.beginPath()
+        ctx.arc(x*W, y*H, 2, 0, Math.PI*2)
+        ctx.fill()
+      }
+    }
   }
+
+  function drawHeat(t: number) {
+    // Composite heat on top of base map
+    ctx.save()
+    ctx.globalCompositeOperation = 'screen'
+
+    for (const src of sources) {
+      const pulse  = 1 + 0.08 * Math.sin(t * 0.03 + src.phase)
+      const bx     = src.x * W
+      const by     = src.y * H
+      const br     = src.r * Math.min(W, H) * pulse
+      const alpha  = src.score * (0.85 + 0.15 * Math.sin(t * 0.022 + src.phase))
+
+      const grad = ctx.createRadialGradient(bx, by, 0, bx, by, br)
+
+      if (src.score > 0.75) {
+        // Ultra hot: cyan core → magenta → violet
+        grad.addColorStop(0,    `rgba(34, 211, 238, ${alpha * 0.85})`)
+        grad.addColorStop(0.15, `rgba(255, 170, 60, ${alpha * 0.75})`)
+        grad.addColorStop(0.35, `rgba(255, 107, 0, ${alpha * 0.6})`)
+        grad.addColorStop(0.65, `rgba(79, 70, 229, ${alpha * 0.35})`)
+        grad.addColorStop(1,    'rgba(30, 27, 75, 0)')
+      } else if (src.score > 0.45) {
+        // Medium: violet → indigo
+        grad.addColorStop(0,    `rgba(255, 107, 0, ${alpha * 0.7})`)
+        grad.addColorStop(0.4,  `rgba(79, 70, 229, ${alpha * 0.45})`)
+        grad.addColorStop(0.8,  `rgba(49, 46, 129, ${alpha * 0.2})`)
+        grad.addColorStop(1,    'rgba(30, 27, 75, 0)')
+      } else {
+        // Ghost zone: deep blue
+        grad.addColorStop(0,    `rgba(55, 48, 163, ${alpha * 0.5})`)
+        grad.addColorStop(0.5,  `rgba(30, 27, 75, ${alpha * 0.25})`)
+        grad.addColorStop(1,    'rgba(15, 14, 50, 0)')
+      }
+
+      ctx.beginPath()
+      ctx.arc(bx, by, br, 0, Math.PI*2)
+      ctx.fillStyle = grad
+      ctx.fill()
+    }
+
+    ctx.restore()
+  }
+
+  function drawContours(t: number) {
+    // Topographic-style concentric rings around heat sources
+    ctx.save()
+    ctx.globalCompositeOperation = 'screen'
+
+    for (const src of sources) {
+      if (src.score < 0.4) continue
+
+      const bx   = src.x * W
+      const by   = src.y * H
+      const base = src.r * Math.min(W, H)
+
+      const numRings = src.score > 0.7 ? 4 : 2
+      for (let ring = 1; ring <= numRings; ring++) {
+        const phase   = (t * 0.015 + ring * 0.55 + src.phase) % (Math.PI * 2)
+        const radius  = base * (0.3 + ring * 0.22) * (1 + 0.05 * Math.sin(phase))
+        const ringAlpha = src.score * 0.35 * (1 - ring / (numRings + 1))
+
+        ctx.beginPath()
+        ctx.arc(bx, by, radius, 0, Math.PI*2)
+        const col = src.score > 0.7
+          ? `rgba(34, 211, 238, ${ringAlpha})`
+          : `rgba(255, 107, 0, ${ringAlpha})`
+        ctx.strokeStyle = col
+        ctx.lineWidth = 1
+        ctx.setLineDash([4, 5])
+        ctx.stroke()
+        ctx.setLineDash([])
+      }
+    }
+
+    ctx.restore()
+  }
+
+  function drawPins(t: number) {
+    for (const pin of pins) {
+      const px = pin.x * W
+      const py = pin.y * H
+      const pulse = 1 + 0.3 * Math.sin(t * 0.04)
+
+      // Outer pulse ring
+      ctx.beginPath()
+      ctx.arc(px, py, 10 * pulse, 0, Math.PI*2)
+      ctx.strokeStyle = 'rgba(255, 170, 60, 0.25)'
+      ctx.lineWidth = 1
+      ctx.stroke()
+
+      // Inner fill dot
+      ctx.beginPath()
+      ctx.arc(px, py, 4, 0, Math.PI*2)
+      const pinGrad = ctx.createRadialGradient(px, py, 0, px, py, 4)
+      pinGrad.addColorStop(0, '#fff')
+      pinGrad.addColorStop(1, '#FFAA3C')
+      ctx.fillStyle = pinGrad
+      ctx.fill()
+
+      // Tiny glow halo
+      ctx.beginPath()
+      ctx.arc(px, py, 7, 0, Math.PI*2)
+      ctx.fillStyle = 'rgba(255, 107, 0, 0.15)'
+      ctx.fill()
+    }
+  }
+
+  // ─── Animation loop ───────────────────────────────────────────────────────────
+  let animId = 0
+  let t = 0
+
+  function draw() {
+    ctx.clearRect(0, 0, W, H)
+    drawBaseMap()
+    drawHeat(t)
+    drawContours(t)
+    drawPins(t)
+    t++
+    animId = requestAnimationFrame(draw)
+  }
+
+  draw()
+
+  const obs = new IntersectionObserver((entries) => {
+    for (const e of entries) {
+      if (e.isIntersecting)  { if (!animId) draw() }
+      else { cancelAnimationFrame(animId); animId = 0 }
+    }
+  })
+  obs.observe(canvas)
+  } // end if (ctx)
 </script>

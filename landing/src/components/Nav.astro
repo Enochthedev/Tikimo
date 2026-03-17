@@ -2,7 +2,9 @@
 ---
 <nav class="nav" id="main-nav">
   <div class="nav-inner container">
-    <a href="/" class="nav-logo">Tiximo</a>
+    <a href="/" class="nav-logo">
+      <span class="nav-logo-text">Tiximo</span>
+    </a>
     <div class="nav-links">
       <a href="#how" class="nav-link">How it works</a>
       <a href="#features" class="nav-link">Features</a>
@@ -18,16 +20,20 @@
     left: 0;
     right: 0;
     z-index: 100;
-    padding: 22px 0;
+    padding: 20px 0;
     transition: background 0.4s, padding 0.4s, backdrop-filter 0.4s;
+    background: rgba(7, 7, 15, 0.5);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border-bottom: 1px solid transparent;
   }
 
   .nav.scrolled {
-    background: rgba(11, 11, 13, 0.9);
+    background: rgba(7, 7, 15, 0.9);
     backdrop-filter: blur(24px);
     -webkit-backdrop-filter: blur(24px);
     padding: 14px 0;
-    border-bottom: 1px solid var(--border);
+    border-bottom-color: var(--border);
   }
 
   .nav-inner {
@@ -37,12 +43,18 @@
   }
 
   .nav-logo {
-    font-family: var(--font-display);
-    font-size: 20px;
-    font-weight: 600;
-    letter-spacing: -0.5px;
     text-decoration: none;
-    color: var(--text);
+  }
+
+  .nav-logo-text {
+    font-family: var(--font-heading);
+    font-size: 22px;
+    font-weight: 700;
+    letter-spacing: -0.5px;
+    background: linear-gradient(135deg, #fff 30%, #FFAA3C);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
   }
 
   .nav-links {
@@ -64,7 +76,7 @@
 
   .nav-cta {
     font-size: 13px;
-    padding: 10px 22px;
+    padding: 9px 20px;
   }
 
   @media (max-width: 600px) {

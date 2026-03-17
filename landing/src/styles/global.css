@@ -1,4 +1,14 @@
-/* ─── Clash Display — hero / big display ───────────────────────────────────── */
+/* ─── Pilowlava — display / hero wordmark ───────────────────────────────────── */
+
+@font-face {
+  font-family: 'Pilowlava';
+  src: url('/fonts/Pilowlava-Regular.woff2') format('woff2');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+/* ─── Clash Display — fallback display ─────────────────────────────────────── */
 
 @font-face {
   font-family: 'Clash Display';
@@ -8,7 +18,7 @@
   font-display: swap;
 }
 
-/* ─── Cabinet Grotesk — headings + UI ──────────────────────────────────────── */
+/* ─── Cabinet Grotesk — fallback body ──────────────────────────────────────── */
 
 @font-face {
   font-family: 'Cabinet Grotesk';
@@ -25,24 +35,68 @@
 /* ─── Variables ────────────────────────────────────────────────────────────── */
 
 :root {
-  --bg:       #0b0b0d;
-  --surface:  #141416;
-  --border:   #1e1e22;
-  --text:     #f2ece0;
-  --dim:      #6d6860;
-  --accent:   #d4583a;
-  --warm:     #c4915a;
-  --glow:     #e8c466;
-  --radius:   14px;
+  --bg:         #040404;
+  --surface:    #0e0e0e;
+  --surface-2:  #181818;
+  --border:     #242424;
+  --border-2:   #323232;
+  --text:       #ffffff;
+  --dim:        #888;
 
-  --font-display: 'Clash Display', system-ui, sans-serif;
-  --font-heading: 'Cabinet Grotesk', system-ui, sans-serif;
-  --font-body:    'Cabinet Grotesk', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  /* ── Concert lighting palette — zero purple ── */
+  --accent:     #FF6B00;    /* electric amber  — stage spotlight   */
+  --accent-2:   #FFAA3C;    /* warm amber      — glow / soft light */
+  --cyan:       #00E5FF;    /* electric cyan   — laser light       */
+  --magenta:    #FF2D6B;    /* hot pink        — neon sign         */
+  --gold:       #FFD700;    /* gold            — VIP / marquee     */
+  --radius:     16px;
+
+  /* Satoshi from Fontshare CDN, falls back to Cabinet Grotesk / system */
+  --font-display: 'Pilowlava', system-ui, sans-serif;
+  --font-heading: 'Satoshi', 'Clash Display', system-ui, sans-serif;
+  --font-body:    'Satoshi', 'Cabinet Grotesk', system-ui, -apple-system, sans-serif;
+  --font-tunnel:  'Boxing', 'Clash Display', system-ui, sans-serif;
+
+  --gradient-accent: linear-gradient(135deg, #FF6B00, #FF2D6B, #00E5FF);
+  --gradient-text:   linear-gradient(135deg, #ffffff 0%, #FFAA3C 50%, #FF2D6B 100%);
+
+  /* ── Derived alpha tokens — change any base color above and these cascade ──── */
+  /* Usage: var(--a10) instead of rgba(255,107,0,0.10)                           */
+  --a05:  color-mix(in srgb, var(--accent)   5%,  transparent);
+  --a08:  color-mix(in srgb, var(--accent)   8%,  transparent);
+  --a10:  color-mix(in srgb, var(--accent)   10%, transparent);
+  --a15:  color-mix(in srgb, var(--accent)   15%, transparent);
+  --a20:  color-mix(in srgb, var(--accent)   20%, transparent);
+  --a30:  color-mix(in srgb, var(--accent)   30%, transparent);
+  --a40:  color-mix(in srgb, var(--accent)   40%, transparent);
+  --a2-10: color-mix(in srgb, var(--accent-2) 10%, transparent);
+  --a2-20: color-mix(in srgb, var(--accent-2) 20%, transparent);
+  --a2-30: color-mix(in srgb, var(--accent-2) 30%, transparent);
+  --c10:  color-mix(in srgb, var(--cyan)     10%, transparent);
+  --c15:  color-mix(in srgb, var(--cyan)     15%, transparent);
+  --c20:  color-mix(in srgb, var(--cyan)     20%, transparent);
+  --m10:  color-mix(in srgb, var(--magenta)  10%, transparent);
+  --m20:  color-mix(in srgb, var(--magenta)  20%, transparent);
 }
 
 /* ─── Base ─────────────────────────────────────────────────────────────────── */
 
 html { scroll-behavior: smooth; overflow-x: hidden; }
+
+/* ─── Film grain — fights the "too digital" look ───────────────────────────── */
+
+body::after {
+  content: '';
+  position: fixed;
+  inset: 0;
+  z-index: 9998;
+  pointer-events: none;
+  opacity: 0.035;
+  mix-blend-mode: overlay;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  background-repeat: repeat;
+  background-size: 200px 200px;
+}
 
 body {
   background: var(--bg);
@@ -64,22 +118,47 @@ a { color: inherit; }
 /* ─── Section defaults ─────────────────────────────────────────────────────── */
 
 .section-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
   font-family: var(--font-body);
-  font-size: 12px;
-  font-weight: 500;
-  letter-spacing: 3px;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 2.5px;
   text-transform: uppercase;
-  color: var(--dim);
-  margin-bottom: 16px;
+  color: var(--accent-2);
+  margin-bottom: 18px;
+  padding: 5px 14px;
+  border-radius: 100px;
+  border: 1px solid rgba(255, 107, 0, 0.3);
+  background: rgba(255, 107, 0, 0.08);
 }
 
 .section-title {
-  font-family: var(--font-display);
+  font-family: var(--font-heading);
   font-size: clamp(30px, 5vw, 56px);
-  font-weight: 600;
+  font-weight: 800;
   letter-spacing: -1.5px;
-  line-height: 1.05;
+  line-height: 1.0;
   color: var(--text);
+}
+
+/* ─── Gradient text utility ────────────────────────────────────────────────── */
+
+.grad-text {
+  background: var(--gradient-text);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* ─── Glass utility ─────────────────────────────────────────────────────────── */
+
+.glass {
+  background: rgba(14, 14, 14, 0.7);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 107, 0, 0.1);
 }
 
 /* ─── Buttons ──────────────────────────────────────────────────────────────── */
@@ -90,37 +169,47 @@ a { color: inherit; }
   gap: 8px;
   padding: 14px 30px;
   border-radius: 100px;
-  font-family: var(--font-heading);
+  font-family: var(--font-body);
   font-size: 15px;
-  font-weight: 600;
+  font-weight: 700;
   text-decoration: none;
   cursor: pointer;
   border: none;
   transition: transform 0.2s, box-shadow 0.2s, opacity 0.2s;
   white-space: nowrap;
+  letter-spacing: 0.2px;
 }
 
-.btn:hover { transform: translateY(-1px); }
+.btn:hover { transform: translateY(-2px); }
 .btn:active { transform: translateY(0); }
 
 .btn-primary {
-  background: var(--accent);
+  background: linear-gradient(135deg, #FF6B00, #FF2D6B);
   color: #fff;
-  box-shadow: 0 4px 24px rgba(212, 88, 58, 0.25);
+  box-shadow: 0 4px 24px rgba(255, 107, 0, 0.4);
 }
-.btn-primary:hover { box-shadow: 0 8px 32px rgba(212, 88, 58, 0.35); }
+.btn-primary:hover { box-shadow: 0 8px 40px rgba(255, 107, 0, 0.65); }
 
 .btn-outline {
-  background: transparent;
+  background: rgba(14, 14, 14, 0.6);
   color: var(--text);
-  border: 1.5px solid var(--border);
+  border: 1.5px solid var(--border-2);
+  backdrop-filter: blur(12px);
 }
-.btn-outline:hover { border-color: var(--dim); }
+.btn-outline:hover { border-color: rgba(255, 107, 0, 0.45); }
 
 /* ─── Scrollbar ────────────────────────────────────────────────────────────── */
 
 ::-webkit-scrollbar { width: 4px; }
 ::-webkit-scrollbar-track { background: var(--bg); }
-::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+::-webkit-scrollbar-thumb { background: var(--border-2); border-radius: 2px; }
 
-::selection { background: rgba(212, 88, 58, 0.2); color: var(--text); }
+::selection { background: rgba(255, 107, 0, 0.3); color: var(--text); }
+
+/* ─── Section stacking ─────────────────────────────────────────────────────── */
+/* Sections after sticky hero stack on top and slide over it                    */
+.soundwave-strip, .stats, .how, .chat-demo, .features, .map-teaser, .cta, .site-footer {
+  position: relative;
+  z-index: 10;
+  isolation: isolate;
+}

@@ -1,7 +1,14 @@
 ---
 ---
 <section class="cta">
-  <div class="cta-inner">
+  <!-- Aurora behind -->
+  <div class="cta-orb cta-orb-1" aria-hidden="true"></div>
+  <div class="cta-orb cta-orb-2" aria-hidden="true"></div>
+
+  <!-- Glass card -->
+  <div class="cta-card" data-cta-card>
+    <div class="cta-card-glow" aria-hidden="true"></div>
+
     <div class="cta-title-wrap" data-cta-title>
       <span class="cta-line cta-tonight">Tonight</span>
       <span class="cta-line cta-starts">starts here.</span>
@@ -15,6 +22,8 @@
       <a href="https://t.me/tiximo_bot" class="btn btn-primary">Open in Telegram</a>
       <a href="https://wa.me/tiximo" class="btn btn-outline">WhatsApp</a>
     </div>
+
+    <p class="cta-note">No download &middot; No account &middot; Just chat</p>
   </div>
 </section>
 
@@ -23,11 +32,58 @@
     background: var(--bg);
     padding: 180px 28px;
     text-align: center;
+    position: relative;
+    overflow: hidden;
   }
 
-  .cta-inner {
+  .cta-orb {
+    position: absolute;
+    border-radius: 50%;
+    pointer-events: none;
+  }
+
+  .cta-orb-1 {
+    width: 700px;
+    height: 700px;
+    background: radial-gradient(circle, rgba(255, 107, 0, 0.2) 0%, rgba(255, 149, 0, 0.06) 50%, transparent 70%);
+    top: -200px;
+    left: 50%;
+    transform: translateX(-50%);
+  }
+
+  .cta-orb-2 {
+    width: 500px;
+    height: 500px;
+    background: radial-gradient(circle, rgba(255, 45, 107, 0.1) 0%, transparent 70%);
+    bottom: -120px;
+    right: 5%;
+  }
+
+  .cta-card {
+    position: relative;
     max-width: 700px;
     margin: 0 auto;
+    background: rgba(14, 14, 28, 0.6);
+    backdrop-filter: blur(32px);
+    -webkit-backdrop-filter: blur(32px);
+    border: 1px solid rgba(255, 107, 0, 0.18);
+    border-radius: 28px;
+    padding: 72px 56px;
+    opacity: 0;
+    transform: translateY(30px);
+  }
+
+  .cta-card-glow {
+    position: absolute;
+    inset: -1px;
+    border-radius: 29px;
+    background: linear-gradient(135deg, rgba(255, 107, 0, 0.3), rgba(0, 229, 255, 0.1), transparent 60%);
+    z-index: -1;
+    filter: blur(1px);
+  }
+
+  @media (max-width: 600px) {
+    .cta-card { padding: 48px 28px; }
   }
 
   .cta-title-wrap {
@@ -35,12 +91,10 @@
     flex-direction: column;
     align-items: center;
     margin-bottom: 32px;
-    opacity: 0;
-    transform: translateY(24px);
   }
 
   .cta-line {
-    font-family: var(--font-display);
+    font-family: var(--font-heading);
     font-weight: 600;
     font-size: clamp(48px, 11vw, 100px);
     letter-spacing: -3px;
@@ -53,7 +107,7 @@
   }
 
   .cta-starts {
-    background: linear-gradient(135deg, var(--accent), var(--warm), var(--glow));
+    background: linear-gradient(135deg, #ff9500, #ff2d6b 50%, #FFAA3C);
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     background-clip: text;
@@ -64,8 +118,6 @@
     color: var(--dim);
     margin-bottom: 44px;
     line-height: 1.6;
-    opacity: 0;
-    transform: translateY(16px);
   }
 
   .cta-buttons {
@@ -73,8 +125,15 @@
     gap: 16px;
     justify-content: center;
     flex-wrap: wrap;
-    opacity: 0;
-    transform: translateY(16px);
+    margin-bottom: 24px;
+  }
+
+  .cta-note {
+    font-size: 11px;
+    color: var(--dim);
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    opacity: 0.6;
   }
 </style>
 
@@ -89,10 +148,7 @@
     start: 'top 70%',
     once: true,
     onEnter: () => {
-      gsap.to('[data-cta-title]', { opacity: 1, y: 0, duration: 1, ease: 'power3.out' })
-      gsap.to(['[data-cta-sub]', '[data-cta-btns]'], {
-        opacity: 1, y: 0, duration: 0.7, ease: 'power2.out', stagger: 0.15, delay: 0.25,
-      })
+      gsap.to('[data-cta-card]', { opacity: 1, y: 0, duration: 1.1, ease: 'power3.out' })
     },
   })
 </script>
