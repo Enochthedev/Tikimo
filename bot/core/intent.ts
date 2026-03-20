@@ -4,7 +4,7 @@ import { writeIntentLog } from '@/services/warehouse/writer.js'
 import { logger } from '@/utils/logger.js'
 
 export interface ParsedIntent {
-  intent: 'find_events' | 'find_events_in_city' | 'change_city' | 'greeting' | 'help' | 'lucky' | 'map' | 'browse' | 'life_of_party' | 'unknown'
+  intent: 'find_events' | 'find_events_in_city' | 'change_city' | 'event_info' | 'book_tickets' | 'greeting' | 'help' | 'lucky' | 'map' | 'browse' | 'life_of_party' | 'unknown'
   city?: string
   category?: string
   artist?: string     // performer / act name e.g. "Davido", "Burna Boy"
@@ -26,6 +26,8 @@ Intents:
 - "lucky" — feeling lucky, surprise me, random
 - "map" — show map, open map
 - "browse" — browse, explore categories
+- "event_info" — user is asking about a specific event's details — where it is, what time, who's performing (e.g., "where is UMDENI iPIANO", "what time is La Fiesta", "tell me about the pool party", "where is that concert")
+- "book_tickets" — user wants to buy tickets for a specific event right now (e.g., "get me tickets for UMDENI", "I want to go to La Fiesta", "book me for the pool party", "buy tickets for the second one")
 - "life_of_party" — user wants the most hyped/going-off event (e.g., "what's going to bang", "what's lit tonight", "life of the party", "I'm in a party mood", "feeling like going out and vibing", "where's the energy tonight", "take me somewhere hype")
 - "unknown" — anything else
 
@@ -98,6 +100,30 @@ User: "is La Fiesta still happening in Lagos?"
 
 User: "search for the splash pool party"
 {"intent":"find_events","eventName":"The Splash Pool Party"}
+
+User: "where is UMDENI iPIANO happening?"
+{"intent":"event_info","eventName":"UMDENI iPIANO"}
+
+User: "what time does La Fiesta start?"
+{"intent":"event_info","eventName":"La Fiesta"}
+
+User: "tell me more about that concert"
+{"intent":"event_info"}
+
+User: "where is it?"
+{"intent":"event_info"}
+
+User: "get me tickets for UMDENI"
+{"intent":"book_tickets","eventName":"UMDENI"}
+
+User: "I want to go to La Fiesta"
+{"intent":"book_tickets","eventName":"La Fiesta"}
+
+User: "can you book me for the pool party?"
+{"intent":"book_tickets","eventName":"The Splash Pool Party"}
+
+User: "buy tickets for the second one"
+{"intent":"book_tickets"}
 
 Now classify this message:`
 

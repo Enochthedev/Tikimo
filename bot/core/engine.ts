@@ -20,6 +20,7 @@ import { writeIntentConfirmation } from '../services/warehouse/writer.js'
 import { updateTaste } from '../services/ranking/tasteModel.js'
 import type { InboundMessage } from './types/message.js'
 import type { OutboundResponse } from './types/response.js'
+import type { User } from './types/user.js'
 
 export async function processMessage(msg: InboundMessage): Promise<OutboundResponse> {
   const [user, ctx] = await Promise.all([
@@ -173,6 +174,12 @@ export async function processMessage(msg: InboundMessage): Promise<OutboundRespo
         }
         return handleDiscovery(msg, user)
       }
+
+      case 'event_info':
+        return handleDirectEventLookup(msg, user, intent, ctx, 'info')
+
+      case 'book_tickets':
+        return handleDirectEventLookup(msg, user, intent, ctx, 'book')
 
       case 'browse':
         return handleBrowse(msg, user)
@@ -419,6 +426,92 @@ async function handleEventDetail(
     events: [enriched],
     actions,
   }
+}
+
+/**
+ * Direct event lookup — user asked about a specific event by name, or wants tickets.
+ * Resolves from context (already-shown events) or searches providers, then
+ * returns event detail (info) or direct booking link (book).
+ */
+async function handleDirectEventLookup(
+  msg: InboundMessage,
+  user: Pick<User, 'id' | 'radiusKm'> & { lastLat?: number; lastLng?: number },
+  intent: { eventName?: string; category?: string },
+  ctx: ConversationContext | null,
+  mode: 'info' | 'book',
+): Promise<OutboundResponse> {
+  const keyword = intent.eventName
+
+  // 1. Try to resolve from already-shown events in context
+  if (ctx?.lastEvents?.length) {
+    let match = keyword
+      ? ctx.lastEvents.find((e) => e.name.toLowerCase().includes(keyword.toLowerCase()))
+      : ctx.lastEvents[0] // "where is it?" / "book it" with no name → most recent
+
+    if (match) {
+      if (mode === 'book') {
+        if (match.url) {
+          const providerLabel: Record<string, string> = {
+            ticketmaster: 'Ticketmaster', eventbrite: 'Eventbrite', popout: 'Popout Tickets',
+            tixafrica: 'Tix Africa', skiddle: 'Skiddle', dice: 'DICE',
+            predicthq: 'PredictHQ', serpapi: 'the web',
+          }
+          if (match.category) updateTaste(user.id, match.category, 'booked').catch(() => {})
+          return {
+            type: 'deep_link',
+            text: `Here you go — "${match.name}" on ${providerLabel[match.provider] ?? match.provider} 🎟`,
+            link: match.url,
+          }
+        }
+        return { type: 'message', text: `I found "${match.name}" but don't have a ticket link for it. Try searching the venue directly.` }
+      }
+
+      // mode === 'info' — show full event detail card
+      return handleEventDetail(msg, match.id, ctx)
+    }
+  }
+
+  // 2. Not in context — search providers for it
+  if (!keyword) {
+    return { type: 'message', text: "Which event? Give me the name and I'll look it up." }
+  }
+
+  const response = await handleDiscovery(msg, user, {
+    category: intent.category,
+    keyword,
+  })
+
+  // If we found events, auto-show the first match's detail (info) or booking link (book)
+  if (response.type === 'event_list' && response.events?.length) {
+    const best = response.events[0]
+
+    if (mode === 'book' && best.url) {
+      if (best.category) updateTaste(user.id, best.category, 'booked').catch(() => {})
+      const providerLabel: Record<string, string> = {
+        ticketmaster: 'Ticketmaster', eventbrite: 'Eventbrite', popout: 'Popout Tickets',
+        tixafrica: 'Tix Africa', skiddle: 'Skiddle', dice: 'DICE',
+        predicthq: 'PredictHQ', serpapi: 'the web',
+      }
+      return {
+        type: 'deep_link',
+        text: `Found it! "${best.name}" on ${providerLabel[best.provider] ?? best.provider} 🎟`,
+        link: best.url,
+      }
+    }
+
+    // info mode — show detail card for the best match
+    // Store in context first so handleEventDetail can find it
+    await updateContext(msg.platform, msg.userId, {
+      lastEvents: response.events.slice(0, 20),
+      lastEventIds: response.events.map((e) => e.id),
+      lastEventNames: response.events.map((e) => e.name),
+    }).catch(() => {})
+
+    const updatedCtx = await getContext(msg.platform, msg.userId)
+    return handleEventDetail(msg, best.id, updatedCtx)
+  }
+
+  return response // zero results pass through
 }
 
 async function handleUnknown(text: string, lastCity?: string): Promise<OutboundResponse> {
