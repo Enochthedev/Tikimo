@@ -1,6 +1,7 @@
 import { getCachedCard } from '@/services/cache/cardCache.js'
 import { latLngToCell } from '@/services/events/aggregator.js'
 import { recordBooked } from '@/services/tracking/interactions.js'
+import { providerLabel } from '../providers.js'
 import type { InboundMessage } from '../types/message.js'
 import type { OutboundResponse } from '../types/response.js'
 import type { User } from '../types/user.js'
@@ -12,31 +13,16 @@ export async function handleBooking(msg: InboundMessage, user: User): Promise<Ou
   }
 
   const cached = await getCachedCard(eventId, msg.platform)
-
   if (!cached) {
-    return {
-      type: 'message',
-      text: "I lost that one. Search again and I'll find it.",
-    }
+    return { type: 'message', text: "I lost that one. Search again and I'll find it." }
   }
 
   const geoCell = user.lastGeoCell ?? latLngToCell(user.lastLat ?? 0, user.lastLng ?? 0)
   await recordBooked(user.id, cached, geoCell)
 
-  const providerLabel: Record<string, string> = {
-    ticketmaster: 'Ticketmaster',
-    eventbrite: 'Eventbrite',
-    predicthq: 'PredictHQ',
-    serpapi: 'the web',
-    skiddle: 'Skiddle',
-    dice: 'DICE',
-    popout: 'Popout Tickets',
-    tixafrica: 'Tix Africa',
-  }
-
   return {
     type: 'deep_link',
-    text: `Here you go — "${cached.name}" on ${providerLabel[cached.provider] ?? cached.provider} 🎟`,
+    text: `Here you go — "${cached.name}" on ${providerLabel(cached.provider)} 🎟`,
     link: cached.url,
   }
 }

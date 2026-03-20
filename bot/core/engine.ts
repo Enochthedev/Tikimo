@@ -1,23 +1,23 @@
 import { findOrCreateUser, updateUserLocation, updateDisplayName } from '../db/queries.js'
 import { latLngToCell } from '../services/events/aggregator.js'
-import { complete } from '../services/ai/client.js'
-import { formatEventCard } from '../services/ai/formatter.js'
-import { getCachedCard, setCachedCard } from '../services/cache/cardCache.js'
-import { forwardGeocode, reverseGeocode, resolveAmbiguousCity } from '../services/location/geocoder.js'
 import { getContext, updateContext, pushChatMessage } from '../services/cache/contextCache.js'
-import type { ConversationContext } from '../services/cache/contextCache.js'
 import { logger } from '../utils/logger.js'
 import { isEnabled } from './flags.js'
 import { handleBooking } from './flows/booking.js'
 import { handleBrowse } from './flows/browse.js'
+import { handleCitySearch } from './flows/citySearch.js'
 import { handleDiscovery } from './flows/discovery.js'
+import { handleEventDetail, handleDirectEventLookup } from './flows/eventDetail.js'
+import { handleGreeting, handleUnknown } from './flows/greeting.js'
 import { handleLucky } from './flows/lucky.js'
 import { handleLifeOfParty, isLifeOfPartyQuery } from './flows/party.js'
 import { handleMapRequest } from './flows/map.js'
 import { handleOnboarding, needsOnboarding } from './flows/onboarding.js'
+import { handleDislike, handleSeeMore, handleSomethingDifferent } from './flows/pagination.js'
 import { parseIntent } from './intent.js'
 import { writeIntentConfirmation } from '../services/warehouse/writer.js'
 import { updateTaste } from '../services/ranking/tasteModel.js'
+import { reverseGeocode } from '../services/location/geocoder.js'
 import type { InboundMessage } from './types/message.js'
 import type { OutboundResponse } from './types/response.js'
 import type { User } from './types/user.js'
@@ -36,26 +36,9 @@ export async function processMessage(msg: InboundMessage): Promise<OutboundRespo
     updateDisplayName(user.id, msg.senderName).catch(() => {})
   }
 
-  // Handle incoming location update
+  // Location update
   if (msg.type === 'location' && msg.location) {
-    const { lat, lng } = msg.location
-    const geoCell = latLngToCell(lat, lng)
-    await updateUserLocation(user.id, lat, lng, geoCell)
-    user.lastLat = lat
-    user.lastLng = lng
-    user.lastGeoCell = geoCell
-
-    // Reverse-geocode to get country for future city lookups
-    const geo = await reverseGeocode(lat, lng)
-    if (geo) {
-      await updateContext(msg.platform, msg.userId, {
-        lastCity: geo.city,
-        // Store ISO alpha-2 code (e.g. 'ng') not the full name — Geoapify countrycode filter requires it
-        lastCountry: geo.countryCode || geo.country,
-        lastLat: lat,
-        lastLng: lng,
-      })
-    }
+    await handleLocationUpdate(msg, user)
   }
 
   // Onboarding gate — bypass for city-based searches
@@ -69,138 +52,9 @@ export async function processMessage(msg: InboundMessage): Promise<OutboundRespo
     return handleOnboarding(msg, user)
   }
 
-  // Location shared → trigger discovery
-  if (msg.type === 'location') {
-    return handleDiscovery(msg, user)
-  }
-
-  // Action routing (inline keyboard callbacks)
-  if (msg.type === 'action') {
-    const { id } = msg.action ?? { id: '' }
-    if (id === 'event_detail') {
-      const event = ctx?.lastEvents?.find((e) => e.id === msg.action!.payload)
-      if (event?.category) updateTaste(user.id, event.category, 'detail').catch(() => {})
-      return handleEventDetail(msg, msg.action!.payload, ctx)
-    }
-    if (id === 'book_event') {
-      if (ctx?.lastIntentId) {
-        writeIntentConfirmation({ intent_id: ctx.lastIntentId, signal: 'booked', ts: new Date() })
-      }
-      const event = ctx?.lastEvents?.find((e) => e.id === msg.action!.payload)
-      if (event?.category) updateTaste(user.id, event.category, 'booked').catch(() => {})
-      return handleBooking(msg, user)
-    }
-    if (id === 'feeling_lucky') {
-      if (await isEnabled('FEELING_LUCKY', user)) return handleLucky(msg, user)
-    }
-    if (id === 'open_map') {
-      if (await isEnabled('MAP_VIEW', user)) return handleMapRequest(user, msg.platform)
-    }
-    if (id === 'share_location') return handleOnboarding(msg, user)
-    if (id === 'dislike_event') {
-      const event = ctx?.lastEvents?.find((e) => e.id === msg.action!.payload)
-      if (event?.category) updateTaste(user.id, event.category, 'disliked').catch(() => {})
-      return handleDislike(msg, user, msg.action!.payload)
-    }
-    if (id === 'see_more') {
-      if (ctx?.lastIntentId) {
-        writeIntentConfirmation({ intent_id: ctx.lastIntentId, signal: 'see_more', ts: new Date() })
-      }
-      return handleSeeMore(msg, user)
-    }
-    if (id === 'something_different') {
-      return handleSomethingDifferent(msg, user)
-    }
-    if (id === 'find_events_in_city') {
-      return handleCitySearch(msg, user, msg.action!.payload, undefined, undefined)
-    }
-  }
-
-  // NLP-powered text routing
-  if (msg.type === 'text' && msg.text) {
-    // Log user message to conversation history
-    pushChatMessage(msg.platform, msg.userId, 'user', msg.text).catch(() => {})
-
-    // Check for Life of Party triggers before full NLP parse
-    if (await isEnabled('LIFE_OF_PARTY', user) && isLifeOfPartyQuery(msg.text)) {
-      return handleLifeOfParty(msg, user)
-    }
-
-    const intent = await parseIntent(msg.text, {
-      userId: user.id,
-      platform: msg.platform,
-      chatHistory: ctx?.chatHistory,
-      lastEventNames: ctx?.lastEventNames,
-    })
-    logger.info({ intent: intent.intent, city: intent.city, category: intent.category, eventName: intent.eventName }, 'parsed intent')
-    // Persist intent ID so downstream actions can confirm it
-    updateContext(msg.platform, msg.userId, { lastIntentId: intent.intentId })
-
-    switch (intent.intent) {
-      case 'greeting':
-        return handleGreeting(msg, user, ctx?.lastCity)
-
-      case 'help':
-        return {
-          type: 'message',
-          text: "I find events near you. Share your location and I'll show what's happening. You can also ask — \"events in Lagos\", \"comedy in London\", \"what's on tonight\".",
-        }
-
-      case 'find_events':
-        return handleDiscovery(msg, user, {
-          category: intent.category,
-          keyword: intent.eventName ?? intent.artist ?? intent.venueName,
-        })
-
-      case 'find_events_in_city': {
-        // A city follow-up after results confirms the previous intent was understood
-        if (ctx?.lastIntentId && ctx?.lastEventIds?.length) {
-          writeIntentConfirmation({ intent_id: ctx.lastIntentId, signal: 'follow_up_city', ts: new Date() })
-        }
-        const city = intent.city ?? ctx?.lastCity
-        if (city) {
-          return handleCitySearch(msg, user, city, intent.category, ctx?.lastCountry, intent.eventName ?? intent.artist ?? intent.venueName)
-        }
-        return handleDiscovery(msg, user)
-      }
-
-      case 'change_city': {
-        if (ctx?.lastIntentId && ctx?.lastEventIds?.length) {
-          writeIntentConfirmation({ intent_id: ctx.lastIntentId, signal: 'follow_up_city', ts: new Date() })
-        }
-        const city = intent.city ?? ctx?.lastCity
-        if (city) {
-          return handleCitySearch(msg, user, city, ctx?.lastCategory, ctx?.lastCountry)
-        }
-        return handleDiscovery(msg, user)
-      }
-
-      case 'event_info':
-        return handleDirectEventLookup(msg, user, intent, ctx, 'info')
-
-      case 'book_tickets':
-        return handleDirectEventLookup(msg, user, intent, ctx, 'book')
-
-      case 'browse':
-        return handleBrowse(msg, user)
-
-      case 'lucky':
-        if (await isEnabled('FEELING_LUCKY', user)) return handleLucky(msg, user)
-        break
-
-      case 'life_of_party':
-        if (await isEnabled('LIFE_OF_PARTY', user)) return handleLifeOfParty(msg, user)
-        break
-
-      case 'map':
-        if (await isEnabled('MAP_VIEW', user)) return handleMapRequest(user, msg.platform)
-        break
-
-      case 'unknown':
-      default:
-        return handleUnknown(msg.text, ctx?.lastCity)
-    }
-  }
+  if (msg.type === 'location') return handleDiscovery(msg, user)
+  if (msg.type === 'action') return routeAction(msg, user, ctx)
+  if (msg.type === 'text' && msg.text) return routeText(msg, user, ctx)
 
   return {
     type: 'message',
@@ -209,323 +63,137 @@ export async function processMessage(msg: InboundMessage): Promise<OutboundRespo
   }
 }
 
-async function handleCitySearch(
+async function handleLocationUpdate(
   msg: InboundMessage,
-  user: { id: string; radiusKm: number },
-  cityName: string,
-  category?: string,
-  biasCountry?: string,
-  keyword?: string,
-): Promise<OutboundResponse> {
-  const ambiguous = resolveAmbiguousCity(cityName, biasCountry)
-  if (ambiguous) {
-    if ('options' in ambiguous) {
-      // Country code unknown or didn't match — ask the user
-      return {
-        type: 'message',
-        text: `Which ${cityName} do you mean?`,
-        actions: [
-          { label: ambiguous.options[0], id: 'find_events_in_city', payload: ambiguous.options[0] },
-          { label: ambiguous.options[1], id: 'find_events_in_city', payload: ambiguous.options[1] },
-        ],
-      }
-    }
-    // Country code matched — use the resolved full name (e.g. "Lagos, Nigeria")
-    cityName = ambiguous.resolved
-  }
+  user: { id: string; lastLat?: number; lastLng?: number; lastGeoCell?: string },
+): Promise<void> {
+  const { lat, lng } = msg.location!
+  const geoCell = latLngToCell(lat, lng)
+  await updateUserLocation(user.id, lat, lng, geoCell)
+  user.lastLat = lat
+  user.lastLng = lng
+  user.lastGeoCell = geoCell
 
-  const geo = await forwardGeocode(cityName, biasCountry)
-  if (!geo) {
-    return {
-      type: 'message',
-      text: `I couldn't find "${cityName}" on the map. Try a bigger city name or check the spelling?`,
-    }
-  }
-
-  logger.info({ city: geo.city, country: geo.country, lat: geo.lat, lng: geo.lng }, 'geocoded city')
-
-  // Persist city search to context so follow-up messages have it
-  // Store ISO country code (e.g. 'ng') so future city searches can bias correctly
-  await updateContext(msg.platform, msg.userId, {
-    lastCity: geo.city,
-    lastCountry: geo.countryCode || geo.country,
-    lastLat: geo.lat,
-    lastLng: geo.lng,
-    lastCategory: category,
-    currentPage: 0,
-  })
-
-  const cityMsg: InboundMessage = {
-    ...msg,
-    location: { lat: geo.lat, lng: geo.lng },
-  }
-
-  return handleDiscovery(cityMsg, { ...user, radiusKm: Math.max(user.radiusKm, 15) }, {
-    cityLabel: `${geo.city}, ${geo.country}`,
-    category,
-    keyword,
-  })
-}
-
-async function handleDislike(
-  msg: InboundMessage,
-  user: { id: string; radiusKm: number; lastLat?: number; lastLng?: number },
-  eventId: string,
-): Promise<OutboundResponse> {
-  const ctx = await getContext(msg.platform, msg.userId)
-  const disliked = [...(ctx?.dislikedEventIds ?? []), eventId]
-  await updateContext(msg.platform, msg.userId, { dislikedEventIds: disliked })
-
-  // Re-run discovery excluding this event
-  const response = await handleDiscovery(msg, user)
-
-  if (response.type === 'event_list' && response.events) {
-    const filtered = response.events.filter((e) => !disliked.includes(e.id))
-    if (filtered.length === 0) {
-      return { type: 'message', text: "Got it — nothing else nearby right now. Try a different city?" }
-    }
-    return {
-      ...response,
-      text: "Got it — dropping those. Here's what's left 👇",
-      events: filtered,
-      actions: response.actions?.filter(
-        (a) => a.id !== 'book_event' && a.id !== 'dislike_event'
-          || !disliked.includes(a.payload)
-      ),
-    }
-  }
-
-  return { type: 'message', text: "Got it — noted 👍" }
-}
-
-async function handleSeeMore(
-  msg: InboundMessage,
-  user: { id: string; radiusKm: number; lastLat?: number; lastLng?: number },
-): Promise<OutboundResponse> {
-  const ctx = await getContext(msg.platform, msg.userId)
-  const nextPage = (ctx?.currentPage ?? 0) + 1
-  await updateContext(msg.platform, msg.userId, { currentPage: nextPage })
-
-  // Use context location as fallback when the action message carries no GPS and user has no stored location
-  const enrichedMsg =
-    !msg.location && !user.lastLat && ctx?.lastLat && ctx?.lastLng
-      ? { ...msg, location: { lat: ctx.lastLat, lng: ctx.lastLng } }
-      : msg
-
-  const response = await handleDiscovery(enrichedMsg, user)
-  if (response.type === 'event_list') {
-    return { ...response, text: `More coming at you 👇` }
-  }
-  return response
-}
-
-async function handleSomethingDifferent(
-  msg: InboundMessage,
-  user: { id: string; radiusKm: number; lastLat?: number; lastLng?: number },
-): Promise<OutboundResponse> {
-  const ctx = await getContext(msg.platform, msg.userId)
-  // Advance to the next page rather than resetting to 0 — resetting causes the same events to repeat
-  const nextPage = (ctx?.currentPage ?? 0) + 1
-  await updateContext(msg.platform, msg.userId, {
-    dislikedEventIds: ctx?.dislikedEventIds ?? [],
-    currentPage: nextPage,
-  })
-
-  // Use context location as fallback when the action message carries no GPS and user has no stored location
-  const enrichedMsg =
-    !msg.location && !user.lastLat && ctx?.lastLat && ctx?.lastLng
-      ? { ...msg, location: { lat: ctx.lastLat, lng: ctx.lastLng } }
-      : msg
-
-  const response = await handleDiscovery(enrichedMsg, user)
-  if (response.type === 'event_list') {
-    return { ...response, text: "Here's a different batch 🔀" }
-  }
-  return response
-}
-
-async function handleGreeting(
-  msg: InboundMessage,
-  user: { id: string; displayName?: string; lastLat?: number; lastLng?: number },
-  _lastSearchedCity?: string, // intentionally ignored — use GPS city, not last searched
-): Promise<OutboundResponse> {
-  const name = user.displayName || msg.senderName
-
-  if (user.lastLat && user.lastLng) {
-    // Reverse geocode their actual saved location — not the last city they searched
-    const geo = await reverseGeocode(user.lastLat, user.lastLng)
-    const where = geo?.city ? `in ${geo.city}` : 'near you'
-    const nameHint = name ? ` Their name is ${name}.` : ''
-
-    try {
-      const reply = await complete(
-        `The user just said hi. You're Tiximo, a warm event discovery bot. They've used you before — their location is ${where}.${nameHint} Give a short friendly greeting (1 sentence) and offer to find events. Be casual, not robotic.${name ? ' Use their name.' : ''}`,
-        'cheap',
-      )
-      return {
-        type: 'message',
-        text: reply,
-        actions: [{ label: `🔍 Events ${where}`, id: 'find_events', payload: '' }],
-      }
-    } catch {
-      const hi = name ? `Hey ${name}!` : 'Hey!'
-      return {
-        type: 'message',
-        text: `${hi} Good to see you 👋 Want me to find events ${where}?`,
-        actions: [{ label: `🔍 Events ${where}`, id: 'find_events', payload: '' }],
-      }
-    }
-  }
-
-  // New user — standard onboarding
-  return handleOnboarding(msg, user as Parameters<typeof handleOnboarding>[1])
-}
-
-async function handleEventDetail(
-  msg: InboundMessage,
-  eventId: string,
-  ctx: ConversationContext | null,
-): Promise<OutboundResponse> {
-  const event = ctx?.lastEvents?.find((e) => e.id === eventId)
-  if (!event) {
-    return { type: 'message', text: "I've lost track of that event — try searching again." }
-  }
-
-  // Get or generate AI summary on demand
-  let enriched = event
-  const cached = await getCachedCard(event.id, msg.platform)
-  if (cached?.aiSummary) {
-    enriched = { ...event, aiSummary: cached.aiSummary }
-  } else {
-    try {
-      const aiSummary = await formatEventCard(event, msg.platform)
-      enriched = { ...event, aiSummary }
-      await setCachedCard(enriched, msg.platform)
-    } catch {
-      // proceed without summary
-    }
-  }
-
-  const actions: Array<{ label: string; id: string; payload: string }> = []
-  if (enriched.url) {
-    actions.push({ label: '🎟 Get Tickets', id: 'book_event', payload: enriched.id })
-  }
-  // Directions via Google Maps — use coords if available, otherwise venue+city name
-  const directionsQuery = enriched.lat && enriched.lng
-    ? `${enriched.lat},${enriched.lng}`
-    : encodeURIComponent(`${enriched.venue}, ${enriched.city}`)
-  actions.push({
-    label: '📍 Directions',
-    id: 'directions',
-    payload: `https://www.google.com/maps/dir/?api=1&destination=${directionsQuery}`,
-  })
-
-  return {
-    type: 'event_card',
-    text: '',
-    events: [enriched],
-    actions,
-  }
-}
-
-/**
- * Direct event lookup — user asked about a specific event by name, or wants tickets.
- * Resolves from context (already-shown events) or searches providers, then
- * returns event detail (info) or direct booking link (book).
- */
-async function handleDirectEventLookup(
-  msg: InboundMessage,
-  user: Pick<User, 'id' | 'radiusKm'> & { lastLat?: number; lastLng?: number },
-  intent: { eventName?: string; category?: string },
-  ctx: ConversationContext | null,
-  mode: 'info' | 'book',
-): Promise<OutboundResponse> {
-  const keyword = intent.eventName
-
-  // 1. Try to resolve from already-shown events in context
-  if (ctx?.lastEvents?.length) {
-    let match = keyword
-      ? ctx.lastEvents.find((e) => e.name.toLowerCase().includes(keyword.toLowerCase()))
-      : ctx.lastEvents[0] // "where is it?" / "book it" with no name → most recent
-
-    if (match) {
-      if (mode === 'book') {
-        if (match.url) {
-          const providerLabel: Record<string, string> = {
-            ticketmaster: 'Ticketmaster', eventbrite: 'Eventbrite', popout: 'Popout Tickets',
-            tixafrica: 'Tix Africa', skiddle: 'Skiddle', dice: 'DICE',
-            predicthq: 'PredictHQ', serpapi: 'the web',
-          }
-          if (match.category) updateTaste(user.id, match.category, 'booked').catch(() => {})
-          return {
-            type: 'deep_link',
-            text: `Here you go — "${match.name}" on ${providerLabel[match.provider] ?? match.provider} 🎟`,
-            link: match.url,
-          }
-        }
-        return { type: 'message', text: `I found "${match.name}" but don't have a ticket link for it. Try searching the venue directly.` }
-      }
-
-      // mode === 'info' — show full event detail card
-      return handleEventDetail(msg, match.id, ctx)
-    }
-  }
-
-  // 2. Not in context — search providers for it
-  if (!keyword) {
-    return { type: 'message', text: "Which event? Give me the name and I'll look it up." }
-  }
-
-  const response = await handleDiscovery(msg, user, {
-    category: intent.category,
-    keyword,
-  })
-
-  // If we found events, auto-show the first match's detail (info) or booking link (book)
-  if (response.type === 'event_list' && response.events?.length) {
-    const best = response.events[0]
-
-    if (mode === 'book' && best.url) {
-      if (best.category) updateTaste(user.id, best.category, 'booked').catch(() => {})
-      const providerLabel: Record<string, string> = {
-        ticketmaster: 'Ticketmaster', eventbrite: 'Eventbrite', popout: 'Popout Tickets',
-        tixafrica: 'Tix Africa', skiddle: 'Skiddle', dice: 'DICE',
-        predicthq: 'PredictHQ', serpapi: 'the web',
-      }
-      return {
-        type: 'deep_link',
-        text: `Found it! "${best.name}" on ${providerLabel[best.provider] ?? best.provider} 🎟`,
-        link: best.url,
-      }
-    }
-
-    // info mode — show detail card for the best match
-    // Store in context first so handleEventDetail can find it
+  const geo = await reverseGeocode(lat, lng)
+  if (geo) {
     await updateContext(msg.platform, msg.userId, {
-      lastEvents: response.events.slice(0, 20),
-      lastEventIds: response.events.map((e) => e.id),
-      lastEventNames: response.events.map((e) => e.name),
-    }).catch(() => {})
-
-    const updatedCtx = await getContext(msg.platform, msg.userId)
-    return handleEventDetail(msg, best.id, updatedCtx)
+      lastCity: geo.city,
+      lastCountry: geo.countryCode || geo.country,
+      lastLat: lat,
+      lastLng: lng,
+    })
   }
-
-  return response // zero results pass through
 }
 
-async function handleUnknown(text: string, lastCity?: string): Promise<OutboundResponse> {
-  try {
-    const cityHint = lastCity ? ` Last city searched: ${lastCity}.` : ''
-    const reply = await complete(
-      `The user said: "${text}"\n\nYou're Tiximo, an event discovery bot.${cityHint} The user said something you don't understand as an event query. Respond naturally in 1-2 short sentences. Be warm but steer them toward what you can do (find events, share location, search by city). Don't be robotic.`,
-      'cheap',
-    )
-    return { type: 'message', text: reply }
-  } catch {
-    return {
-      type: 'message',
-      text: "Didn't catch that — tell me a city, a vibe, or just say \"surprise me\" 👀",
-    }
+async function routeAction(
+  msg: InboundMessage,
+  user: User,
+  ctx: Awaited<ReturnType<typeof getContext>>,
+): Promise<OutboundResponse> {
+  const { id, payload } = msg.action ?? { id: '', payload: '' }
+
+  if (id === 'event_detail') {
+    const event = ctx?.lastEvents?.find((e) => e.id === payload)
+    if (event?.category) updateTaste(user.id, event.category, 'detail').catch(() => {})
+    return handleEventDetail(msg, payload, ctx)
   }
+  if (id === 'book_event') {
+    if (ctx?.lastIntentId) {
+      writeIntentConfirmation({ intent_id: ctx.lastIntentId, signal: 'booked', ts: new Date() })
+    }
+    const event = ctx?.lastEvents?.find((e) => e.id === payload)
+    if (event?.category) updateTaste(user.id, event.category, 'booked').catch(() => {})
+    return handleBooking(msg, user)
+  }
+  if (id === 'feeling_lucky' && await isEnabled('FEELING_LUCKY', user)) return handleLucky(msg, user)
+  if (id === 'open_map' && await isEnabled('MAP_VIEW', user)) return handleMapRequest(user, msg.platform)
+  if (id === 'share_location') return handleOnboarding(msg, user)
+  if (id === 'dislike_event') {
+    const event = ctx?.lastEvents?.find((e) => e.id === payload)
+    if (event?.category) updateTaste(user.id, event.category, 'disliked').catch(() => {})
+    return handleDislike(msg, user, payload)
+  }
+  if (id === 'see_more') {
+    if (ctx?.lastIntentId) writeIntentConfirmation({ intent_id: ctx.lastIntentId, signal: 'see_more', ts: new Date() })
+    return handleSeeMore(msg, user)
+  }
+  if (id === 'something_different') return handleSomethingDifferent(msg, user)
+  if (id === 'find_events_in_city') return handleCitySearch(msg, user, payload, undefined, undefined)
+
+  return { type: 'message', text: "Not sure what to do with that — try searching for events." }
+}
+
+async function routeText(
+  msg: InboundMessage,
+  user: User,
+  ctx: Awaited<ReturnType<typeof getContext>>,
+): Promise<OutboundResponse> {
+  const text = msg.text!
+  pushChatMessage(msg.platform, msg.userId, 'user', text).catch(() => {})
+
+  if (await isEnabled('LIFE_OF_PARTY', user) && isLifeOfPartyQuery(text)) {
+    return handleLifeOfParty(msg, user)
+  }
+
+  const intent = await parseIntent(text, {
+    userId: user.id,
+    platform: msg.platform,
+    chatHistory: ctx?.chatHistory,
+    lastEventNames: ctx?.lastEventNames,
+  })
+  logger.info({ intent: intent.intent, city: intent.city, category: intent.category, eventName: intent.eventName }, 'parsed intent')
+  updateContext(msg.platform, msg.userId, { lastIntentId: intent.intentId })
+
+  const keyword = intent.eventName ?? intent.artist ?? intent.venueName
+
+  switch (intent.intent) {
+    case 'greeting':
+      return handleGreeting(msg, user)
+
+    case 'help':
+      return {
+        type: 'message',
+        text: "I find events near you. Share your location and I'll show what's happening. You can also ask — \"events in Lagos\", \"comedy in London\", \"what's on tonight\".",
+      }
+
+    case 'find_events':
+      return handleDiscovery(msg, user, { category: intent.category, keyword })
+
+    case 'find_events_in_city':
+    case 'change_city': {
+      if (ctx?.lastIntentId && ctx?.lastEventIds?.length) {
+        writeIntentConfirmation({ intent_id: ctx.lastIntentId, signal: 'follow_up_city', ts: new Date() })
+      }
+      const city = intent.city ?? ctx?.lastCity
+      if (city) return handleCitySearch(msg, user, city, intent.category, ctx?.lastCountry, keyword)
+      return handleDiscovery(msg, user)
+    }
+
+    case 'event_info':
+      return handleDirectEventLookup(msg, user, intent, ctx, 'info')
+
+    case 'book_tickets':
+      return handleDirectEventLookup(msg, user, intent, ctx, 'book')
+
+    case 'browse':
+      return handleBrowse(msg, user)
+
+    case 'lucky':
+      if (await isEnabled('FEELING_LUCKY', user)) return handleLucky(msg, user)
+      break
+
+    case 'life_of_party':
+      if (await isEnabled('LIFE_OF_PARTY', user)) return handleLifeOfParty(msg, user)
+      break
+
+    case 'map':
+      if (await isEnabled('MAP_VIEW', user)) return handleMapRequest(user, msg.platform)
+      break
+
+    case 'unknown':
+    default:
+      return handleUnknown(text, ctx?.lastCity)
+  }
+
+  return handleUnknown(text, ctx?.lastCity)
 }

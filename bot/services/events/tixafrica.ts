@@ -90,7 +90,6 @@ export async function searchTixAfrica(params: {
   lat: number
   lng: number
   radiusKm: number
-  category?: string
   keyword?: string
 }): Promise<NormalisedEvent[]> {
   const { lat, lng, keyword } = params
@@ -153,7 +152,7 @@ function normaliseTixEvent(e: TixEventNode): NormalisedEvent | null {
   }
 
   const image = e.discoveryImage || e.headerImage
-  const venue = e.locationName || e.address || 'TBA'
+  const venue = e.locationName || extractVenueFromAddress(e.address) || 'Venue TBA'
   const city = extractCityFromAddress(e.address, e.country)
 
   return {
@@ -172,12 +171,17 @@ function normaliseTixEvent(e: TixEventNode): NormalisedEvent | null {
   }
 }
 
+function extractVenueFromAddress(address: string | null): string | null {
+  if (!address) return null
+  const parts = address.split(',').map((s) => s.trim())
+  return parts.length >= 2 ? parts[0] : null
+}
+
 function extractCityFromAddress(
   address: string | null,
   country: string | null,
 ): string {
   if (!address) return country || 'Nigeria'
-  // Common pattern: "123 Street, Lekki, Lagos" — take second-to-last or last comma segment
   const parts = address.split(',').map((s) => s.trim())
   if (parts.length >= 2) return parts[parts.length - 1] || parts[parts.length - 2]
   return address

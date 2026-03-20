@@ -84,7 +84,7 @@ function buildEventListText(response: OutboundResponse): string {
     response.events.slice(0, 5).forEach((e, i) => {
       lines.push(`\n*${i + 1}. ${e.name}*`)
       lines.push(`📅 ${formatEventDate(e.date)}`)
-      lines.push(`📍 ${e.venue}, ${e.city}`)
+      lines.push(`📍 ${formatVenue(e.venue, e.city)}`)
       if (e.additionalSlots) lines.push(`🔁 ${e.additionalSlots + 1} dates available`)
     })
     lines.push('\n_Tap a number for details, or tell me which one you like_')
@@ -98,7 +98,7 @@ function buildEventDetailText(response: OutboundResponse): string {
   const lines: string[] = []
   lines.push(`*${e.name}*`)
   lines.push(`📅 ${formatEventDate(e.date)}`)
-  lines.push(`📍 ${e.venue}, ${e.city}`)
+  lines.push(`📍 ${formatVenue(e.venue, e.city)}`)
   if (e.priceRange) lines.push(`💰 ${e.priceRange}`)
   if (e.additionalSlots) lines.push(`🔁 ${e.additionalSlots + 1} dates available`)
   if (e.aiSummary) lines.push(`\n_${e.aiSummary}_`)
@@ -149,4 +149,13 @@ function buildKeyboard(response: OutboundResponse): InlineKeyboard | null {
     kb.text(action.label, `${action.id}:${action.payload}`).row()
   }
   return kb
+}
+
+const VENUE_TBA = new Set(['venue tbc', 'venue tba', 'tba', 'tbc', ''])
+
+function formatVenue(venue: string, city: string): string {
+  const v = VENUE_TBA.has(venue.toLowerCase().trim()) ? null : venue
+  const c = city.trim() || null
+  if (v && c) return `${v}, ${c}`
+  return v ?? c ?? 'Location TBA'
 }

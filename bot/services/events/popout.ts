@@ -31,11 +31,8 @@ export async function searchPopout(params: {
   lat: number
   lng: number
   radiusKm: number
-  category?: string
   keyword?: string
 }): Promise<NormalisedEvent[]> {
-  const { keyword } = params
-
   try {
     const data = await ky
       .get(`${BASE}/events/all`, { timeout: 15_000 })
@@ -45,9 +42,8 @@ export async function searchPopout(params: {
 
     let events = data.events
 
-    // Filter by keyword if provided
-    if (keyword) {
-      const kw = keyword.toLowerCase()
+    if (params.keyword) {
+      const kw = params.keyword.toLowerCase()
       events = events.filter(
         (e) =>
           e.name.toLowerCase().includes(kw) ||
@@ -57,11 +53,10 @@ export async function searchPopout(params: {
       )
     }
 
-    // Filter by category if provided
-    if (params.category) {
-      const cat = params.category.toLowerCase()
-      events = events.filter((e) => e.category?.toLowerCase().includes(cat))
-    }
+    // Category filtering happens downstream in the ranker — not here.
+    // Popout categories don't align with our intent parser's categories,
+    // so filtering here drops valid results (e.g. "CONTROVERSY" missed
+    // when intent says "music" but Popout tags it as "party").
 
     return events
       .map(normalisePopoutEvent)

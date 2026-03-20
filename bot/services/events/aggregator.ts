@@ -3,6 +3,7 @@ import type { NormalisedEvent } from '@/core/types/response.js'
 import { env } from '@/config/env.js'
 import { incrementCacheHit } from '@/db/queries.js'
 import { logger } from '@/utils/logger.js'
+import { isSameMetro } from '../location/metros.js'
 import { getGeoCachedEvents, setGeoCachedEvents } from '../cache/geoCache.js'
 import { searchEventbrite } from './eventbrite.js'
 import { searchTicketmaster } from './ticketmaster.js'
@@ -22,61 +23,71 @@ export async function getEvents(params: {
   lng: number
   radiusKm: number
   category?: string
-  keyword?: string  // artist name, venue name, or free-text search
+  keyword?: string
+  city?: string // user's city — filters providers that lack geo-coords
 }): Promise<{ events: NormalisedEvent[]; geoCell: string; fromCache: boolean }> {
-  const { lat, lng, radiusKm, category, keyword } = params
+  const { lat, lng, radiusKm, category, keyword, city } = params
   const geoCell = latLngToCell(lat, lng)
 
-  const cached = await getGeoCachedEvents(geoCell, radiusKm, category)
-  if (cached) {
-    await incrementCacheHit(geoCell, radiusKm, category)
-    // Re-filter cached events — some may have started since they were cached
-    const now = new Date()
-    const stillFuture = cached.filter((e) => {
-      const d = new Date(e.date)
-      return !isNaN(d.getTime()) && d > now
-    })
-    logger.debug({ geoCell, radiusKm, total: cached.length, stillFuture: stillFuture.length }, 'geo cache hit')
-    return { events: stillFuture, geoCell, fromCache: true }
+  // Keyword searches bypass cache — they're specific and the cache key doesn't include keyword
+  if (!keyword) {
+    const cached = await getGeoCachedEvents(geoCell, radiusKm, category)
+    if (cached) {
+      await incrementCacheHit(geoCell, radiusKm, category)
+      const now = new Date()
+      const stillFuture = cached.filter((e) => new Date(e.date).getTime() > now.getTime())
+      logger.debug({ geoCell, radiusKm, total: cached.length, stillFuture: stillFuture.length }, 'geo cache hit')
+      return { events: filterByCity(stillFuture, city), geoCell, fromCache: true }
+    }
   }
 
-  logger.debug({ geoCell, radiusKm }, 'geo cache miss — fetching APIs')
+  logger.debug({ geoCell, radiusKm, keyword: keyword ?? null }, 'fetching providers')
 
-  const [tmEvents, ebEvents, phqEvents, serpEvents, skiddleEvents, diceEvents, popoutEvents, tixEvents] =
-    await Promise.allSettled([
-      searchTicketmaster({ lat, lng, radiusKm, category, keyword }),
-      searchEventbrite({ lat, lng, radiusKm, category, keyword }),
-      searchPredictHq({ lat, lng, radiusKm, category, keyword }),
-      env.SERPAPI_KEY ? searchSerpApi({ lat, lng, category, keyword }) : Promise.resolve([]),
-      env.SKIDDLE_API_KEY ? searchSkiddle({ lat, lng, radiusKm, category, keyword }) : Promise.resolve([]),
-      env.DICE_API_KEY ? searchDice({ lat, lng, radiusKm, category, keyword }) : Promise.resolve([]),
-      searchPopout({ lat, lng, radiusKm, category, keyword }),
-      searchTixAfrica({ lat, lng, radiusKm, category, keyword }),
-    ])
+  const results = await Promise.allSettled([
+    searchTicketmaster({ lat, lng, radiusKm, category, keyword }),
+    searchEventbrite({ lat, lng, radiusKm, category, keyword }),
+    searchPredictHq({ lat, lng, radiusKm, category, keyword }),
+    env.SERPAPI_KEY ? searchSerpApi({ lat, lng, category, keyword }) : Promise.resolve([]),
+    env.SKIDDLE_API_KEY ? searchSkiddle({ lat, lng, radiusKm, category, keyword }) : Promise.resolve([]),
+    env.DICE_API_KEY ? searchDice({ lat, lng, radiusKm, category, keyword }) : Promise.resolve([]),
+    searchPopout({ lat, lng, radiusKm, keyword }),
+    searchTixAfrica({ lat, lng, radiusKm, keyword }),
+  ])
 
-  const events: NormalisedEvent[] = [
-    ...(tmEvents.status === 'fulfilled' ? tmEvents.value : []),
-    ...(ebEvents.status === 'fulfilled' ? ebEvents.value : []),
-    ...(phqEvents.status === 'fulfilled' ? phqEvents.value : []),
-    ...(serpEvents.status === 'fulfilled' ? serpEvents.value : []),
-    ...(skiddleEvents.status === 'fulfilled' ? skiddleEvents.value : []),
-    ...(diceEvents.status === 'fulfilled' ? diceEvents.value : []),
-    ...(popoutEvents.status === 'fulfilled' ? popoutEvents.value : []),
-    ...(tixEvents.status === 'fulfilled' ? tixEvents.value : []),
-  ]
+  const raw: NormalisedEvent[] = results.flatMap((r) => (r.status === 'fulfilled' ? r.value : []))
 
-  // Filter out past events — compare full datetime, not just date
-  // Events from earlier today (e.g. 9am when it's 3pm) are also excluded
-  const now = new Date()
-  const future = events.filter((e) => {
-    const d = new Date(e.date)
-    return !isNaN(d.getTime()) && d > now
+  const deduped = dedupeEvents(filterFuture(raw))
+  deduped.sort((a, b) => a.date.localeCompare(b.date))
+
+  // Only cache non-keyword fetches (keyword results are too specific to reuse)
+  if (!keyword) {
+    await setGeoCachedEvents(geoCell, radiusKm, deduped, category)
+  }
+
+  return { events: filterByCity(deduped, city), geoCell, fromCache: false }
+}
+
+// ── Helpers ──────────────────────────────────────────────────────────────────
+
+function filterFuture(events: NormalisedEvent[]): NormalisedEvent[] {
+  const now = Date.now()
+  return events.filter((e) => {
+    const t = new Date(e.date).getTime()
+    return !isNaN(t) && t > now
   })
+}
 
-  // Dedupe by id first
-  const byId = Array.from(new Map(future.map((e) => [e.id, e])).values())
+/** Drop events with no coords that aren't in the user's metro area. */
+function filterByCity(events: NormalisedEvent[], city?: string): NormalisedEvent[] {
+  if (!city) return events
+  return events.filter((e) => {
+    if (e.lat !== 0 || e.lng !== 0) return true // has coords — already geo-filtered by provider
+    return isSameMetro(e.city, city)
+  })
+}
 
-  // Then dedupe by name+venue — keep earliest slot, track extras
+function dedupeEvents(events: NormalisedEvent[]): NormalisedEvent[] {
+  const byId = Array.from(new Map(events.map((e) => [e.id, e])).values())
   const byNameVenue = new Map<string, NormalisedEvent & { additionalSlots?: number }>()
   for (const event of byId) {
     const key = `${event.name.toLowerCase().trim()}::${event.venue.toLowerCase().trim()}`
@@ -85,18 +96,10 @@ export async function getEvents(params: {
       byNameVenue.set(key, { ...event })
     } else {
       existing.additionalSlots = (existing.additionalSlots ?? 0) + 1
-      // Keep earliest date
       if (event.date < existing.date) {
         byNameVenue.set(key, { ...event, additionalSlots: existing.additionalSlots })
       }
     }
   }
-  const deduped = Array.from(byNameVenue.values())
-
-  // Sort by date
-  deduped.sort((a, b) => a.date.localeCompare(b.date))
-
-  await setGeoCachedEvents(geoCell, radiusKm, deduped, category)
-
-  return { events: deduped, geoCell, fromCache: false }
+  return Array.from(byNameVenue.values())
 }

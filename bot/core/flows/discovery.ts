@@ -13,7 +13,8 @@ import type { User } from '../types/user.js'
 interface DiscoveryOptions {
   cityLabel?: string
   category?: string
-  keyword?: string  // artist name or venue name
+  keyword?: string
+  city?: string // raw city name for geo-filtering providers without coords
 }
 
 const RADIUS_STEPS = [10, 25, 50]
@@ -41,6 +42,10 @@ export async function handleDiscovery(
     await updateUserLocation(user.id, lat, lng, geoCell)
   }
 
+  // Resolve city name for filtering providers without geo-coords (Popout, TixAfrica)
+  const ctx = await getContext(msg.platform, msg.userId)
+  const city = options?.city ?? ctx?.lastCity
+
   // Try with user's preferred radius first, then widen
   const radii = buildRadiusSteps(user.radiusKm)
   let events: NormalisedEvent[] = []
@@ -49,7 +54,7 @@ export async function handleDiscovery(
   let usedRadius = user.radiusKm
 
   for (const radius of radii) {
-    const result = await getEvents({ lat, lng, radiusKm: radius, category: options?.category, keyword: options?.keyword })
+    const result = await getEvents({ lat, lng, radiusKm: radius, category: options?.category, keyword: options?.keyword, city })
     events = result.events
     geoCell = result.geoCell
     fromCache = result.fromCache
@@ -74,8 +79,6 @@ export async function handleDiscovery(
     }
   }
 
-  // Get context for page offset and dislikes
-  const ctx = await getContext(msg.platform, msg.userId)
   const page = ctx?.currentPage ?? 0
   const dislikedEventIds = ctx?.dislikedEventIds ?? []
   const dislikedCategories = ctx?.dislikedCategories ?? []
