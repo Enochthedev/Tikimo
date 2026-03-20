@@ -19,12 +19,20 @@ export async function getGeoCachedEvents(
   category?: string,
 ): Promise<{ events: NormalisedEvent[]; stale: boolean } | null> {
   const key = buildGeoCacheKey(geoCell, radiusKm, category)
-  const cached = await redis.get<CachedPayload>(key)
-  if (!cached?.events) return null
+  const raw = await redis.get<CachedPayload | NormalisedEvent[] | string>(key)
+  if (!raw) return null
 
-  const ageMs = Date.now() - cached.ts
-  const stale = ageMs > GEO_CACHE_TTL * 1000
-  return { events: cached.events, stale }
+  // Handle all possible cache shapes:
+  // 1. New format: { events, ts }
+  // 2. Old format: NormalisedEvent[] (from before the stale-while-revalidate change)
+  // 3. Raw string: some Redis clients return unparsed JSON
+  const parsed = typeof raw === 'string' ? JSON.parse(raw) : raw
+  const events: NormalisedEvent[] = Array.isArray(parsed) ? parsed : parsed?.events
+  if (!events?.length) return null
+
+  const ts: number = Array.isArray(parsed) ? 0 : (parsed?.ts ?? 0)
+  const stale = ts === 0 || (Date.now() - ts) > GEO_CACHE_TTL * 1000
+  return { events, stale }
 }
 
 export async function setGeoCachedEvents(
