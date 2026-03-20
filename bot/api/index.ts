@@ -28,12 +28,15 @@ import { handleMapWebSocket, mapRouter } from './routes/map.js'
 import telegramRouter from './routes/telegram.js'
 import whatsappRouter from './routes/whatsapp.js'
 import { telegramBot } from '../adapters/telegram/index.js'
+import { startCacheWarmer } from '../services/events/cacheWarmer.js'
 
 Sentry.init({ dsn: process.env.SENTRY_DSN, environment: env.NODE_ENV })
 
 // Initialize Grammy bot before any webhook requests arrive
 await telegramBot.init()
 logger.info('telegram bot initialized')
+
+startCacheWarmer()
 
 const app = new Hono()
 

@@ -18,54 +18,122 @@ export function latLngToCell(lat: number, lng: number): string {
   return h3.latLngToCell(lat, lng, 7)
 }
 
-export async function getEvents(params: {
+interface GetEventsParams {
   lat: number
   lng: number
   radiusKm: number
   category?: string
   keyword?: string
-  city?: string // user's city — filters providers that lack geo-coords
-}): Promise<{ events: NormalisedEvent[]; geoCell: string; fromCache: boolean }> {
+  city?: string
+}
+
+// Track in-flight background refreshes to avoid duplicates
+const refreshing = new Set<string>()
+
+export async function getEvents(
+  params: GetEventsParams,
+): Promise<{ events: NormalisedEvent[]; geoCell: string; fromCache: boolean }> {
   const { lat, lng, radiusKm, category, keyword, city } = params
   const geoCell = latLngToCell(lat, lng)
 
-  // Keyword searches bypass cache — they're specific and the cache key doesn't include keyword
+  // Keyword searches always fetch fresh — too specific to cache
   if (!keyword) {
     const cached = await getGeoCachedEvents(geoCell, radiusKm, category)
     if (cached) {
       await incrementCacheHit(geoCell, radiusKm, category)
-      const now = new Date()
-      const stillFuture = cached.filter((e) => new Date(e.date).getTime() > now.getTime())
-      logger.debug({ geoCell, radiusKm, total: cached.length, stillFuture: stillFuture.length }, 'geo cache hit')
-      return { events: filterByCity(stillFuture, city), geoCell, fromCache: true }
+      const fresh = filterFuture(cached.events)
+      logger.debug({ geoCell, radiusKm, count: fresh.length, stale: cached.stale }, 'geo cache hit')
+
+      // Stale-while-revalidate: serve stale data now, refresh in background
+      if (cached.stale) {
+        backgroundRefresh(params, geoCell)
+      }
+
+      return { events: filterByDistance(fresh, lat, lng, radiusKm, city), geoCell, fromCache: true }
     }
   }
 
-  logger.debug({ geoCell, radiusKm, keyword: keyword ?? null }, 'fetching providers')
+  const events = await fetchAllProviders(params)
+  const processed = dedupeEvents(filterFuture(events))
+  processed.sort((a, b) => a.date.localeCompare(b.date))
+
+  if (!keyword) {
+    setGeoCachedEvents(geoCell, radiusKm, processed, category).catch(() => {})
+  }
+
+  return {
+    events: keyword ? processed : filterByDistance(processed, lat, lng, radiusKm, city),
+    geoCell,
+    fromCache: false,
+  }
+}
+
+// ── Provider fetching ────────────────────────────────────────────────────────
+
+async function fetchAllProviders(params: GetEventsParams): Promise<NormalisedEvent[]> {
+  const { lat, lng, radiusKm, category, keyword } = params
+  logger.debug({ radiusKm, keyword: keyword ?? null }, 'fetching all providers')
 
   const results = await Promise.allSettled([
+    searchPopout({ lat, lng, radiusKm, keyword }),
+    searchTixAfrica({ lat, lng, radiusKm, keyword }),
     searchTicketmaster({ lat, lng, radiusKm, category, keyword }),
     searchEventbrite({ lat, lng, radiusKm, category, keyword }),
     searchPredictHq({ lat, lng, radiusKm, category, keyword }),
     env.SERPAPI_KEY ? searchSerpApi({ lat, lng, category, keyword }) : Promise.resolve([]),
     env.SKIDDLE_API_KEY ? searchSkiddle({ lat, lng, radiusKm, category, keyword }) : Promise.resolve([]),
     env.DICE_API_KEY ? searchDice({ lat, lng, radiusKm, category, keyword }) : Promise.resolve([]),
-    searchPopout({ lat, lng, radiusKm, keyword }),
-    searchTixAfrica({ lat, lng, radiusKm, keyword }),
   ])
 
-  const raw: NormalisedEvent[] = results.flatMap((r) => (r.status === 'fulfilled' ? r.value : []))
+  return results.flatMap((r) => (r.status === 'fulfilled' ? r.value : []))
+}
 
-  const deduped = dedupeEvents(filterFuture(raw))
-  deduped.sort((a, b) => a.date.localeCompare(b.date))
+/** Fire-and-forget cache refresh. Dedupes by cache key. */
+function backgroundRefresh(params: GetEventsParams, geoCell: string): void {
+  const key = `${geoCell}:${params.radiusKm}:${params.category ?? 'all'}`
+  if (refreshing.has(key)) return
+  refreshing.add(key)
 
-  // Only cache non-keyword fetches (keyword results are too specific to reuse)
-  if (!keyword) {
-    await setGeoCachedEvents(geoCell, radiusKm, deduped, category)
-  }
+  logger.debug({ geoCell }, 'background cache refresh started')
 
-  // Keyword searches skip city filter — user is looking for something specific
-  return { events: keyword ? deduped : filterByCity(deduped, city), geoCell, fromCache: false }
+  fetchAllProviders(params)
+    .then((events) => {
+      const processed = dedupeEvents(filterFuture(events))
+      processed.sort((a, b) => a.date.localeCompare(b.date))
+      return setGeoCachedEvents(geoCell, params.radiusKm, processed, params.category)
+    })
+    .catch((err) => logger.warn({ err }, 'background refresh failed'))
+    .finally(() => refreshing.delete(key))
+}
+
+// ── Geo math ─────────────────────────────────────────────────────────────────
+
+const R_KM = 6371
+
+function haversineKm(lat1: number, lng1: number, lat2: number, lng2: number): number {
+  const toRad = (d: number) => (d * Math.PI) / 180
+  const dLat = toRad(lat2 - lat1)
+  const dLng = toRad(lng2 - lng1)
+  const a =
+    Math.sin(dLat / 2) ** 2 +
+    Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) * Math.sin(dLng / 2) ** 2
+  return R_KM * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a))
+}
+
+function filterByDistance(
+  events: NormalisedEvent[],
+  userLat: number,
+  userLng: number,
+  radiusKm: number,
+  city?: string,
+): NormalisedEvent[] {
+  const maxKm = radiusKm * 1.5
+  return events.filter((e) => {
+    if (e.lat !== 0 || e.lng !== 0) {
+      return haversineKm(userLat, userLng, e.lat, e.lng) <= maxKm
+    }
+    return city ? isSameMetro(e.city, city) : true
+  })
 }
 
 // ── Helpers ──────────────────────────────────────────────────────────────────
@@ -75,15 +143,6 @@ function filterFuture(events: NormalisedEvent[]): NormalisedEvent[] {
   return events.filter((e) => {
     const t = new Date(e.date).getTime()
     return !isNaN(t) && t > now
-  })
-}
-
-/** Drop events with no coords that aren't in the user's metro area. */
-function filterByCity(events: NormalisedEvent[], city?: string): NormalisedEvent[] {
-  if (!city) return events
-  return events.filter((e) => {
-    if (e.lat !== 0 || e.lng !== 0) return true // has coords — already geo-filtered by provider
-    return isSameMetro(e.city, city)
   })
 }
 
