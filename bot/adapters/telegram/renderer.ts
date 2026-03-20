@@ -123,7 +123,7 @@ function buildKeyboard(response: OutboundResponse): InlineKeyboard | null {
     return kb
   }
 
-  // event_card / detail view — show booking URL if valid
+  // event_card / detail view — show booking URL and directions as URL buttons
   for (const action of response.actions) {
     if (action.id === 'book_event' && response.events) {
       const event = response.events.find((e) => e.id === action.payload)
@@ -135,6 +135,15 @@ function buildKeyboard(response: OutboundResponse): InlineKeyboard | null {
         } catch {
           // bad URL — skip the button
         }
+      }
+    }
+    if (action.id === 'directions') {
+      try {
+        new URL(action.payload)
+        kb.url('📍 Directions', action.payload).row()
+        continue
+      } catch {
+        // bad URL — skip
       }
     }
     kb.text(action.label, `${action.id}:${action.payload}`).row()

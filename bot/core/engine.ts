@@ -1,10 +1,10 @@
-import { findOrCreateUser, updateUserLocation } from '../db/queries.js'
+import { findOrCreateUser, updateUserLocation, updateDisplayName } from '../db/queries.js'
 import { latLngToCell } from '../services/events/aggregator.js'
 import { complete } from '../services/ai/client.js'
 import { formatEventCard } from '../services/ai/formatter.js'
 import { getCachedCard, setCachedCard } from '../services/cache/cardCache.js'
 import { forwardGeocode, reverseGeocode, resolveAmbiguousCity } from '../services/location/geocoder.js'
-import { getContext, updateContext } from '../services/cache/contextCache.js'
+import { getContext, updateContext, pushChatMessage } from '../services/cache/contextCache.js'
 import type { ConversationContext } from '../services/cache/contextCache.js'
 import { logger } from '../utils/logger.js'
 import { isEnabled } from './flags.js'
@@ -28,6 +28,12 @@ export async function processMessage(msg: InboundMessage): Promise<OutboundRespo
   ])
 
   logger.info({ platform: msg.platform, userId: msg.userId, type: msg.type }, 'message received')
+
+  // Auto-capture display name from platform profile (first time only)
+  if (msg.senderName && !user.displayName) {
+    user.displayName = msg.senderName
+    updateDisplayName(user.id, msg.senderName).catch(() => {})
+  }
 
   // Handle incoming location update
   if (msg.type === 'location' && msg.location) {
@@ -111,13 +117,21 @@ export async function processMessage(msg: InboundMessage): Promise<OutboundRespo
 
   // NLP-powered text routing
   if (msg.type === 'text' && msg.text) {
+    // Log user message to conversation history
+    pushChatMessage(msg.platform, msg.userId, 'user', msg.text).catch(() => {})
+
     // Check for Life of Party triggers before full NLP parse
     if (await isEnabled('LIFE_OF_PARTY', user) && isLifeOfPartyQuery(msg.text)) {
       return handleLifeOfParty(msg, user)
     }
 
-    const intent = await parseIntent(msg.text, { userId: user.id, platform: msg.platform })
-    logger.info({ intent: intent.intent, city: intent.city, category: intent.category }, 'parsed intent')
+    const intent = await parseIntent(msg.text, {
+      userId: user.id,
+      platform: msg.platform,
+      chatHistory: ctx?.chatHistory,
+      lastEventNames: ctx?.lastEventNames,
+    })
+    logger.info({ intent: intent.intent, city: intent.city, category: intent.category, eventName: intent.eventName }, 'parsed intent')
     // Persist intent ID so downstream actions can confirm it
     updateContext(msg.platform, msg.userId, { lastIntentId: intent.intentId })
 
@@ -134,7 +148,7 @@ export async function processMessage(msg: InboundMessage): Promise<OutboundRespo
       case 'find_events':
         return handleDiscovery(msg, user, {
           category: intent.category,
-          keyword: intent.artist ?? intent.venueName,
+          keyword: intent.eventName ?? intent.artist ?? intent.venueName,
         })
 
       case 'find_events_in_city': {
@@ -144,7 +158,7 @@ export async function processMessage(msg: InboundMessage): Promise<OutboundRespo
         }
         const city = intent.city ?? ctx?.lastCity
         if (city) {
-          return handleCitySearch(msg, user, city, intent.category, ctx?.lastCountry, intent.artist ?? intent.venueName)
+          return handleCitySearch(msg, user, city, intent.category, ctx?.lastCountry, intent.eventName ?? intent.artist ?? intent.venueName)
         }
         return handleDiscovery(msg, user)
       }
@@ -325,17 +339,20 @@ async function handleSomethingDifferent(
 
 async function handleGreeting(
   msg: InboundMessage,
-  user: { id: string; lastLat?: number; lastLng?: number },
+  user: { id: string; displayName?: string; lastLat?: number; lastLng?: number },
   _lastSearchedCity?: string, // intentionally ignored — use GPS city, not last searched
 ): Promise<OutboundResponse> {
+  const name = user.displayName || msg.senderName
+
   if (user.lastLat && user.lastLng) {
     // Reverse geocode their actual saved location — not the last city they searched
     const geo = await reverseGeocode(user.lastLat, user.lastLng)
     const where = geo?.city ? `in ${geo.city}` : 'near you'
+    const nameHint = name ? ` Their name is ${name}.` : ''
 
     try {
       const reply = await complete(
-        `The user just said hi. You're Tiximo, a warm event discovery bot. They've used you before — their location is ${where}. Give a short friendly greeting (1 sentence) and offer to find events. Be casual, not robotic.`,
+        `The user just said hi. You're Tiximo, a warm event discovery bot. They've used you before — their location is ${where}.${nameHint} Give a short friendly greeting (1 sentence) and offer to find events. Be casual, not robotic.${name ? ' Use their name.' : ''}`,
         'cheap',
       )
       return {
@@ -344,9 +361,10 @@ async function handleGreeting(
         actions: [{ label: `🔍 Events ${where}`, id: 'find_events', payload: '' }],
       }
     } catch {
+      const hi = name ? `Hey ${name}!` : 'Hey!'
       return {
         type: 'message',
-        text: `Hey! Good to see you 👋 Want me to find events ${where}?`,
+        text: `${hi} Good to see you 👋 Want me to find events ${where}?`,
         actions: [{ label: `🔍 Events ${where}`, id: 'find_events', payload: '' }],
       }
     }
@@ -381,13 +399,25 @@ async function handleEventDetail(
     }
   }
 
+  const actions: Array<{ label: string; id: string; payload: string }> = []
+  if (enriched.url) {
+    actions.push({ label: '🎟 Get Tickets', id: 'book_event', payload: enriched.id })
+  }
+  // Directions via Google Maps — use coords if available, otherwise venue+city name
+  const directionsQuery = enriched.lat && enriched.lng
+    ? `${enriched.lat},${enriched.lng}`
+    : encodeURIComponent(`${enriched.venue}, ${enriched.city}`)
+  actions.push({
+    label: '📍 Directions',
+    id: 'directions',
+    payload: `https://www.google.com/maps/dir/?api=1&destination=${directionsQuery}`,
+  })
+
   return {
     type: 'event_card',
     text: '',
     events: [enriched],
-    actions: enriched.url
-      ? [{ label: '🎟 Get Tickets', id: 'book_event', payload: enriched.id }]
-      : [],
+    actions,
   }
 }
 

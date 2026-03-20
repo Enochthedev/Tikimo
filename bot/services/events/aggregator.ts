@@ -10,6 +10,8 @@ import { searchPredictHq } from './predicthq.js'
 import { searchSerpApi } from './serpapi.js'
 import { searchSkiddle } from './skiddle.js'
 import { searchDice } from './dice.js'
+import { searchPopout } from './popout.js'
+import { searchTixAfrica } from './tixafrica.js'
 
 export function latLngToCell(lat: number, lng: number): string {
   return h3.latLngToCell(lat, lng, 7)
@@ -40,7 +42,7 @@ export async function getEvents(params: {
 
   logger.debug({ geoCell, radiusKm }, 'geo cache miss — fetching APIs')
 
-  const [tmEvents, ebEvents, phqEvents, serpEvents, skiddleEvents, diceEvents] =
+  const [tmEvents, ebEvents, phqEvents, serpEvents, skiddleEvents, diceEvents, popoutEvents, tixEvents] =
     await Promise.allSettled([
       searchTicketmaster({ lat, lng, radiusKm, category, keyword }),
       searchEventbrite({ lat, lng, radiusKm, category, keyword }),
@@ -48,6 +50,8 @@ export async function getEvents(params: {
       env.SERPAPI_KEY ? searchSerpApi({ lat, lng, category, keyword }) : Promise.resolve([]),
       env.SKIDDLE_API_KEY ? searchSkiddle({ lat, lng, radiusKm, category, keyword }) : Promise.resolve([]),
       env.DICE_API_KEY ? searchDice({ lat, lng, radiusKm, category, keyword }) : Promise.resolve([]),
+      searchPopout({ lat, lng, radiusKm, category, keyword }),
+      searchTixAfrica({ lat, lng, radiusKm, category, keyword }),
     ])
 
   const events: NormalisedEvent[] = [
@@ -57,6 +61,8 @@ export async function getEvents(params: {
     ...(serpEvents.status === 'fulfilled' ? serpEvents.value : []),
     ...(skiddleEvents.status === 'fulfilled' ? skiddleEvents.value : []),
     ...(diceEvents.status === 'fulfilled' ? diceEvents.value : []),
+    ...(popoutEvents.status === 'fulfilled' ? popoutEvents.value : []),
+    ...(tixEvents.status === 'fulfilled' ? tixEvents.value : []),
   ]
 
   // Filter out past events — compare full datetime, not just date

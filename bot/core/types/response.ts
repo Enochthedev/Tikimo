@@ -1,6 +1,6 @@
 export interface NormalisedEvent {
   id: string
-  provider: 'ticketmaster' | 'eventbrite' | 'predicthq' | 'serpapi' | 'skiddle' | 'dice'
+  provider: 'ticketmaster' | 'eventbrite' | 'predicthq' | 'serpapi' | 'skiddle' | 'dice' | 'popout' | 'tixafrica'
   name: string
   date: string
   venue: string

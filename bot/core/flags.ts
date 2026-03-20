@@ -4,8 +4,8 @@ export const FLAGS = {
   // Discovery
   CATEGORY_FILTER: false,
   RADIUS_EXTENDED: false,
-  FEELING_LUCKY: false,
-  MAP_VIEW: false,
+  FEELING_LUCKY: true,
+  MAP_VIEW: true,
   HYPE_SCORE_UI: false,
   GHOST_ZONES: false,
   SOCIAL_SIGNALS: false,
@@ -16,7 +16,7 @@ export const FLAGS = {
   DAILY_SEARCH_LIMIT: false,
 
   // Taste + personalisation
-  TASTE_LEARNING: false,
+  TASTE_LEARNING: true,
   PROACTIVE_SUGGESTIONS: false,
   REMIND_ME: false,
 
@@ -41,7 +41,7 @@ export const FLAGS = {
   PREFERENCE_LEARNING: false,
 
   // Life of the Party
-  LIFE_OF_PARTY: false,
+  LIFE_OF_PARTY: true,
   TRAFFIC_SIGNAL: false,
 
   // Data sources

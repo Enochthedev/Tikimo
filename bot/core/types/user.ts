@@ -5,6 +5,7 @@ export interface User {
   id: string
   platform: Platform
   platformUserId: string
+  displayName?: string
   radiusKm: number
   preferredCategories: string[]
   lastLat?: number

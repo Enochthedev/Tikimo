@@ -7,8 +7,9 @@ export interface ParsedIntent {
   intent: 'find_events' | 'find_events_in_city' | 'change_city' | 'greeting' | 'help' | 'lucky' | 'map' | 'browse' | 'life_of_party' | 'unknown'
   city?: string
   category?: string
-  artist?: string    // performer / act name e.g. "Davido", "Burna Boy"
-  venueName?: string // specific venue e.g. "O2 Arena", "Madison Square Garden"
+  artist?: string     // performer / act name e.g. "Davido", "Burna Boy"
+  venueName?: string  // specific venue e.g. "O2 Arena", "Madison Square Garden"
+  eventName?: string  // specific event name e.g. "UMDENI iPIANO", "Detty December"
   query?: string
 }
 
@@ -32,6 +33,7 @@ Extract "city" if a location is mentioned. If the user includes a country name a
 Extract "category" if an event type is mentioned (music, comedy, sports, food, art, nightlife, etc).
 Extract "artist" if a performer, artist, or act name is mentioned (e.g. "Davido", "Burna Boy", "Coldplay").
 Extract "venueName" if a specific venue or stadium is mentioned (e.g. "O2 Arena", "Wembley", "Madison Square Garden").
+Extract "eventName" if the user mentions a specific event by name (e.g. "UMDENI iPIANO", "Detty December", "La Fiesta", "The Splash Pool Party"). This is different from artist or venue — it's the event title itself.
 
 Examples:
 User: "any good concerts in Lagos this weekend?"
@@ -88,24 +90,54 @@ User: "concerts at the O2 Arena"
 User: "what's happening at Wembley this weekend"
 {"intent":"find_events","venueName":"Wembley"}
 
+User: "find UMDENI iPIANO"
+{"intent":"find_events","eventName":"UMDENI iPIANO","category":"music"}
+
+User: "is La Fiesta still happening in Lagos?"
+{"intent":"find_events_in_city","city":"Lagos","eventName":"La Fiesta"}
+
+User: "search for the splash pool party"
+{"intent":"find_events","eventName":"The Splash Pool Party"}
+
 Now classify this message:`
+
+export interface IntentContext {
+  userId?: string
+  platform?: string
+  intentId?: string
+  chatHistory?: Array<{ role: 'user' | 'bot'; text: string }>
+  lastEventNames?: string[]
+}
 
 export async function parseIntent(
   text: string,
-  context?: { userId?: string; platform?: string; intentId?: string },
+  context?: IntentContext,
 ): Promise<ParsedIntent & { intentId: string }> {
   let result: ParsedIntent
   let model = 'gemini-flash'
   const intentId = context?.intentId ?? randomUUID()
 
+  // Build context-aware prompt with conversation history
+  let prompt = INTENT_PROMPT
+  if (context?.chatHistory?.length) {
+    const recent = context.chatHistory.slice(-6)
+    const historyStr = recent.map((m) => `${m.role === 'user' ? 'User' : 'Bot'}: "${m.text}"`).join('\n')
+    prompt += `\n\nRecent conversation:\n${historyStr}`
+  }
+  if (context?.lastEventNames?.length) {
+    const eventList = context.lastEventNames.slice(0, 5).map((n, i) => `${i + 1}. ${n}`).join(', ')
+    prompt += `\n\nEvents currently shown to user: ${eventList}`
+    prompt += `\nIf user refers to an event by number ("the first one", "number 2", "that second one"), resolve it to the event name and return intent "find_events" with "eventName" set to the resolved name.`
+  }
+
   try {
-    const raw = await complete(`${INTENT_PROMPT}\n\nUser: "${text}"`, 'cheap')
+    const raw = await complete(`${prompt}\n\nUser: "${text}"`, 'cheap')
 
     const jsonMatch = raw.match(/\{[\s\S]*\}/)
     if (!jsonMatch) {
       // Gemini returned no JSON — retry with smarter model before regex fallback
       logger.warn({ raw }, 'intent parse: no JSON from cheap model, retrying with fast')
-      const retry = await complete(`${INTENT_PROMPT}\n\nUser: "${text}"`, 'fast').catch(() => null)
+      const retry = await complete(`${prompt}\n\nUser: "${text}"`, 'fast').catch(() => null)
       const retryMatch = retry?.match(/\{[\s\S]*\}/)
       if (retryMatch) {
         result = JSON.parse(retryMatch[0]) as ParsedIntent
@@ -123,7 +155,7 @@ export async function parseIntent(
     // Primary model failed — try smarter fallback before regex
     logger.warn({ err, text }, 'intent parse failed, retrying with fast model')
     try {
-      const retry = await complete(`${INTENT_PROMPT}\n\nUser: "${text}"`, 'fast')
+      const retry = await complete(`${prompt}\n\nUser: "${text}"`, 'fast')
       const retryMatch = retry.match(/\{[\s\S]*\}/)
       if (retryMatch) {
         result = JSON.parse(retryMatch[0]) as ParsedIntent

@@ -13,11 +13,14 @@ export function normaliseTelegramMessage(ctx: Context): InboundMessage | null {
   const isGroup = GROUP_TYPES.has(chatType ?? '')
   const botUsername = ctx.me?.username
 
+  const senderName = ctx.from?.first_name || undefined
+
   const base = {
     platform: 'telegram' as const,
     userId,
     channelId,
     isGroup,
+    senderName,
   }
 
   // Location message — only from DMs or when in a group the user explicitly shares

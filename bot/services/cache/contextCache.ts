@@ -5,6 +5,12 @@ import { redis } from './redis.js'
 // 2-hour active conversation window
 const CONTEXT_TTL = 60 * 60 * 2
 
+export interface ChatMessage {
+  role: 'user' | 'bot'
+  text: string
+  ts: number
+}
+
 export interface ConversationContext {
   userId: string
   platform: Platform
@@ -28,6 +34,9 @@ export interface ConversationContext {
   // Taste signals
   dislikedEventIds?: string[]
   dislikedCategories?: string[]
+
+  // Conversation history — last N turns for multi-turn understanding
+  chatHistory?: ChatMessage[]
 
   sessionStart: string // ISO string
 }
@@ -67,4 +76,20 @@ export async function updateContext(
 
 export async function clearContext(platform: Platform, userId: string): Promise<void> {
   await redis.del(contextKey(platform, userId))
+}
+
+const MAX_CHAT_HISTORY = 10
+
+export async function pushChatMessage(
+  platform: Platform,
+  userId: string,
+  role: ChatMessage['role'],
+  text: string,
+): Promise<void> {
+  const ctx = await getContext(platform, userId)
+  const history = ctx?.chatHistory ?? []
+  history.push({ role, text: text.slice(0, 300), ts: Date.now() })
+  // Keep only the last N messages
+  if (history.length > MAX_CHAT_HISTORY) history.splice(0, history.length - MAX_CHAT_HISTORY)
+  await updateContext(platform, userId, { chatHistory: history })
 }

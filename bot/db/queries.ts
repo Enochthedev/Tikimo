@@ -108,11 +108,19 @@ export async function getHypeScores(
 
 // ─── Internal ────────────────────────────────────────────────────────────────
 
+export async function updateDisplayName(userId: string, name: string): Promise<void> {
+  await db
+    .update(users)
+    .set({ displayName: name.slice(0, 100) })
+    .where(eq(users.id, userId))
+}
+
 function rowToUser(row: typeof users.$inferSelect): User {
   return {
     id: row.id,
     platform: row.platform as User['platform'],
     platformUserId: row.platformUserId,
+    displayName: row.displayName ?? undefined,
     radiusKm: row.radiusKm ?? 10,
     preferredCategories: row.preferredCategories ?? [],
     lastLat: row.lastLat ? Number(row.lastLat) : undefined,

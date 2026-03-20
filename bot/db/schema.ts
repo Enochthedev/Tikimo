@@ -21,6 +21,7 @@ export const users = pgTable(
     id: uuid('id').primaryKey().defaultRandom(),
     platform: varchar('platform', { length: 20 }).notNull(),
     platformUserId: varchar('platform_user_id', { length: 100 }).notNull(),
+    displayName: varchar('display_name', { length: 100 }),
     radiusKm: integer('radius_km').default(10),
     preferredCategories: text('preferred_categories').array(),
     lastLat: decimal('last_lat', { precision: 9, scale: 6 }),

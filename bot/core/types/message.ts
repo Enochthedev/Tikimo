@@ -9,4 +9,5 @@ export interface InboundMessage {
   text?: string
   location?: { lat: number; lng: number }
   action?: { id: string; payload: string }
+  senderName?: string // first_name from Telegram, profile name from WhatsApp
 }

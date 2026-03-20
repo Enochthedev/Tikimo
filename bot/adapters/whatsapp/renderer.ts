@@ -27,9 +27,24 @@ export async function renderWhatsAppResponse(
       }
 
       case 'event_card': {
-        await sendText(to, response.text)
-        if (response.actions?.length) {
-          await sendButtonMessage(to, 'Ready to book?', response.actions.slice(0, 3))
+        const cardText = buildEventCardText(response)
+        await sendText(to, cardText)
+        // WhatsApp buttons are reply-only, so send URL actions as text links
+        const urlActions = response.actions?.filter((a) => a.id === 'book_event' || a.id === 'directions') ?? []
+        const replyActions = response.actions?.filter((a) => a.id !== 'book_event' && a.id !== 'directions') ?? []
+        if (urlActions.length) {
+          const links: string[] = []
+          for (const a of urlActions) {
+            if (a.id === 'directions') links.push(`📍 Directions: ${a.payload}`)
+            if (a.id === 'book_event') {
+              const event = response.events?.find((e) => e.id === a.payload)
+              if (event?.url) links.push(`🎟 Get Tickets: ${event.url}`)
+            }
+          }
+          if (links.length) await sendText(to, links.join('\n'))
+        }
+        if (replyActions.length) {
+          await sendButtonMessage(to, 'What next?', replyActions.slice(0, 3))
         }
         break
       }
@@ -83,6 +98,18 @@ async function sendButtonMessage(
       },
     },
   })
+}
+
+function buildEventCardText(response: OutboundResponse): string {
+  const e = response.events?.[0]
+  if (!e) return response.text || 'Event details'
+  const lines: string[] = []
+  lines.push(`*${e.name}*`)
+  lines.push(`📅 ${e.date}`)
+  lines.push(`📍 ${e.venue}, ${e.city}`)
+  if (e.priceRange) lines.push(`💰 ${e.priceRange}`)
+  if (e.aiSummary) lines.push(`\n_${e.aiSummary}_`)
+  return lines.join('\n')
 }
 
 function buildEventListText(response: OutboundResponse): string {

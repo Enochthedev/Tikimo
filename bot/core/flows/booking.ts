@@ -23,9 +23,20 @@ export async function handleBooking(msg: InboundMessage, user: User): Promise<Ou
   const geoCell = user.lastGeoCell ?? latLngToCell(user.lastLat ?? 0, user.lastLng ?? 0)
   await recordBooked(user.id, cached, geoCell)
 
+  const providerLabel: Record<string, string> = {
+    ticketmaster: 'Ticketmaster',
+    eventbrite: 'Eventbrite',
+    predicthq: 'PredictHQ',
+    serpapi: 'the web',
+    skiddle: 'Skiddle',
+    dice: 'DICE',
+    popout: 'Popout Tickets',
+    tixafrica: 'Tix Africa',
+  }
+
   return {
     type: 'deep_link',
-    text: `Here you go — "${cached.name}" on ${cached.provider === 'ticketmaster' ? 'Ticketmaster' : 'Eventbrite'} 🎟`,
+    text: `Here you go — "${cached.name}" on ${providerLabel[cached.provider] ?? cached.provider} 🎟`,
     link: cached.url,
   }
 }
