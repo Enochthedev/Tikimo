@@ -1,8 +1,11 @@
 import ky from 'ky'
 import type { NormalisedEvent } from '@/core/types/response.js'
+import { batchGeocodeVenues } from '@/services/location/venueGeocoder.js'
 import { logger } from '@/utils/logger.js'
 
 const GQL_ENDPOINT = 'https://core.tix.africa/graphql'
+const PER_PAGE = 50
+const MAX_PAGES = 3 // cap at 150 events to stay fast
 
 const DISCOVERY_QUERY = `
 query fetchDiscoveryEvents($keyword: String, $page: Int, $per: Int, $country: SupportedCountries) {
@@ -55,35 +58,27 @@ interface TixEventNode {
   address: string | null
   locationName: string | null
   country: string | null
-  startDate: number // unix timestamp
+  startDate: number
   repeats: number
   eventType: string
   headerImage: string | null
   discoveryImage: string | null
   currency: string
-  tickets: {
-    edges: Array<{ node: TixTicketNode }>
-  }
+  tickets: { edges: Array<{ node: TixTicketNode }> }
 }
 
 interface TixGraphQLResponse {
   data: {
     fetchDiscoveryEvents: {
-      events: {
-        edges: Array<{ node: TixEventNode }>
-      }
+      events: { edges: Array<{ node: TixEventNode }> }
     }
   }
 }
 
-/** Map country names/codes to Tix Africa's SupportedCountries enum */
-function resolveCountryCode(lat: number, _lng: number): string | undefined {
-  // Rough latitude-based heuristic for African countries Tix supports
-  // Tix primarily covers Nigeria (NG), Ghana (GH), Kenya (KE)
-  if (lat >= 4 && lat <= 14) return 'NG' // Nigeria band
-  if (lat >= 4 && lat <= 11) return 'GH' // Ghana overlaps, but default NG
-  if (lat >= -5 && lat <= 5) return 'KE' // Kenya band
-  return undefined
+function resolveCountryCode(lat: number): string {
+  if (lat >= 4 && lat <= 14) return 'NG'
+  if (lat >= -5 && lat <= 5) return 'KE'
+  return 'NG'
 }
 
 export async function searchTixAfrica(params: {
@@ -92,31 +87,19 @@ export async function searchTixAfrica(params: {
   radiusKm: number
   keyword?: string
 }): Promise<NormalisedEvent[]> {
-  const { lat, lng, keyword } = params
-  const country = resolveCountryCode(lat, lng)
+  const country = resolveCountryCode(params.lat)
 
   try {
-    const data = await ky
-      .post(GQL_ENDPOINT, {
-        json: {
-          operationName: 'fetchDiscoveryEvents',
-          query: DISCOVERY_QUERY,
-          variables: {
-            keyword: keyword || undefined,
-            page: 1,
-            per: 50,
-            country: country || 'NG',
-          },
-        },
-        timeout: 15_000,
-      })
-      .json<TixGraphQLResponse>()
+    const allNodes = await fetchAllPages(params.keyword, country)
+    if (allNodes.length === 0) return []
 
-    const edges = data.data?.fetchDiscoveryEvents?.events?.edges
-    if (!edges?.length) return []
+    // Batch-geocode addresses (Redis-cached, 7-day TTL)
+    const addresses = allNodes.map((e) => e.address ?? e.locationName).filter((a): a is string => !!a)
+    const countryHint = country.toLowerCase()
+    const geoMap = await batchGeocodeVenues(addresses, countryHint)
 
-    return edges
-      .map((e) => normaliseTixEvent(e.node))
+    return allNodes
+      .map((e) => normaliseTixEvent(e, geoMap))
       .filter((e): e is NormalisedEvent => e !== null)
   } catch (err) {
     logger.warn({ err }, 'tixafrica: fetch failed')
@@ -124,14 +107,40 @@ export async function searchTixAfrica(params: {
   }
 }
 
-function normaliseTixEvent(e: TixEventNode): NormalisedEvent | null {
-  if (!e.startDate) return null
-  if (e.eventType === 'online') return null
+async function fetchAllPages(keyword: string | undefined, country: string): Promise<TixEventNode[]> {
+  const nodes: TixEventNode[] = []
 
-  // Convert unix timestamp to ISO date
+  for (let page = 1; page <= MAX_PAGES; page++) {
+    const data = await ky
+      .post(GQL_ENDPOINT, {
+        json: {
+          operationName: 'fetchDiscoveryEvents',
+          query: DISCOVERY_QUERY,
+          variables: { keyword: keyword || undefined, page, per: PER_PAGE, country: country || 'NG' },
+        },
+        timeout: 15_000,
+      })
+      .json<TixGraphQLResponse>()
+
+    const edges = data.data?.fetchDiscoveryEvents?.events?.edges
+    if (!edges?.length) break
+
+    nodes.push(...edges.map((e) => e.node))
+    if (edges.length < PER_PAGE) break // last page
+  }
+
+  return nodes
+}
+
+function normaliseTixEvent(
+  e: TixEventNode,
+  geoMap: Map<string, { lat: number; lng: number; city: string }>,
+): NormalisedEvent | null {
+  if (!e.startDate || e.eventType === 'online') return null
+
   const date = new Date(e.startDate * 1000).toISOString()
+  const geo = geoMap.get((e.address ?? e.locationName ?? '').trim())
 
-  // Build price range from tickets
   const activeTickets = e.tickets.edges
     .map((t) => t.node)
     .filter((t) => t.status === 'active' && !t.inviteOnly)
@@ -142,18 +151,13 @@ function normaliseTixEvent(e: TixEventNode): NormalisedEvent | null {
     const min = Math.min(...prices)
     const max = Math.max(...prices)
     const curr = e.currency || 'NGN'
-    if (min === 0 && max === 0) {
-      priceRange = 'Free'
-    } else if (min === max) {
-      priceRange = `${curr} ${min.toLocaleString()}`
-    } else {
-      priceRange = `${curr} ${min.toLocaleString()}–${max.toLocaleString()}`
-    }
+    if (min === 0 && max === 0) priceRange = 'Free'
+    else if (min === max) priceRange = `${curr} ${min.toLocaleString()}`
+    else priceRange = `${curr} ${min.toLocaleString()}–${max.toLocaleString()}`
   }
 
   const image = e.discoveryImage || e.headerImage
-  const venue = e.locationName || extractVenueFromAddress(e.address) || 'Venue TBA'
-  const city = extractCityFromAddress(e.address, e.country)
+  const venue = e.locationName || extractVenue(e.address) || 'Venue TBA'
 
   return {
     id: `tix_${e.slug || e.id}`,
@@ -161,28 +165,18 @@ function normaliseTixEvent(e: TixEventNode): NormalisedEvent | null {
     name: e.title.trim(),
     date,
     venue,
-    city,
-    lat: 0, // Tix Africa doesn't expose coords in discovery API
-    lng: 0,
+    city: geo?.city ?? e.country ?? '',
+    lat: geo?.lat ?? 0,
+    lng: geo?.lng ?? 0,
     priceRange,
     url: `https://tix.africa/discover/${e.customName || e.slug}`,
     imageUrl: image || undefined,
-    category: undefined, // Tix doesn't expose category in discovery query
+    category: undefined,
   }
 }
 
-function extractVenueFromAddress(address: string | null): string | null {
+function extractVenue(address: string | null): string | null {
   if (!address) return null
   const parts = address.split(',').map((s) => s.trim())
   return parts.length >= 2 ? parts[0] : null
-}
-
-function extractCityFromAddress(
-  address: string | null,
-  country: string | null,
-): string {
-  if (!address) return country || 'Nigeria'
-  const parts = address.split(',').map((s) => s.trim())
-  if (parts.length >= 2) return parts[parts.length - 1] || parts[parts.length - 2]
-  return address
 }

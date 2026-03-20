@@ -1,5 +1,6 @@
 import ky from 'ky'
 import type { NormalisedEvent } from '@/core/types/response.js'
+import { batchGeocodeVenues } from '@/services/location/venueGeocoder.js'
 import { logger } from '@/utils/logger.js'
 
 const BASE = 'https://www.popouttickets.com/api'
@@ -53,13 +54,12 @@ export async function searchPopout(params: {
       )
     }
 
-    // Category filtering happens downstream in the ranker — not here.
-    // Popout categories don't align with our intent parser's categories,
-    // so filtering here drops valid results (e.g. "CONTROVERSY" missed
-    // when intent says "music" but Popout tags it as "party").
+    // Batch-geocode all unique locations (Redis-cached, 7-day TTL)
+    const locations = events.map((e) => e.location).filter((l): l is string => !!l)
+    const geoMap = await batchGeocodeVenues(locations, 'ng')
 
     return events
-      .map(normalisePopoutEvent)
+      .map((e) => normalisePopoutEvent(e, geoMap))
       .filter((e): e is NormalisedEvent => e !== null)
   } catch (err) {
     logger.warn({ err }, 'popout: fetch failed')
@@ -67,10 +67,14 @@ export async function searchPopout(params: {
   }
 }
 
-function normalisePopoutEvent(e: PopoutEvent): NormalisedEvent | null {
+function normalisePopoutEvent(
+  e: PopoutEvent,
+  geoMap: Map<string, { lat: number; lng: number; city: string }>,
+): NormalisedEvent | null {
   if (!e.eventStart || !e.location) return null
 
-  // Build price range from ticket types
+  const geo = geoMap.get(e.location.trim())
+
   const availableTickets = e.ticketTypes.filter((t) => t.quantity > 0)
   let priceRange: string | undefined
   if (availableTickets.length > 0) {
@@ -80,7 +84,6 @@ function normalisePopoutEvent(e: PopoutEvent): NormalisedEvent | null {
     priceRange =
       min === max ? `NGN ${min.toLocaleString()}` : `NGN ${min.toLocaleString()}–${max.toLocaleString()}`
   } else if (e.ticketTypes.length > 0) {
-    // All sold out — show original prices for reference
     const prices = e.ticketTypes.map((t) => t.totalPrice)
     const min = Math.min(...prices)
     priceRange = `NGN ${min.toLocaleString()} (sold out)`
@@ -91,10 +94,10 @@ function normalisePopoutEvent(e: PopoutEvent): NormalisedEvent | null {
     provider: 'popout',
     name: e.name,
     date: e.eventStart,
-    venue: e.location,
-    city: extractCity(e.location),
-    lat: 0, // Popout doesn't provide coords — geocode downstream if needed
-    lng: 0,
+    venue: cleanVenue(e.location),
+    city: geo?.city ?? '',
+    lat: geo?.lat ?? 0,
+    lng: geo?.lng ?? 0,
     priceRange,
     url: `https://www.popouttickets.com/events/${e.eventLink}`,
     imageUrl: e.image,
@@ -102,26 +105,9 @@ function normalisePopoutEvent(e: PopoutEvent): NormalisedEvent | null {
   }
 }
 
-/** Best-effort city extraction from location string like "VAULT SOCIAL HOUSE LAGOS" */
-function extractCity(location: string): string {
-  const known = [
-    'Lagos',
-    'Abuja',
-    'Port Harcourt',
-    'Ibadan',
-    'Kano',
-    'Enugu',
-    'Benin City',
-    'Calabar',
-    'Lekki',
-    'Victoria Island',
-    'Ikeja',
-  ]
-  const loc = location.toLowerCase()
-  for (const city of known) {
-    if (loc.includes(city.toLowerCase())) return city
-  }
-  // Fallback: take last word (often the city)
-  const parts = location.split(/\s+/).filter(Boolean)
-  return parts[parts.length - 1] || location
+const JUNK_VENUES = new Set(['undisclosed', 'location', 'to be announced', 'who knows', 'tba', 'tbc', ''])
+
+function cleanVenue(location: string): string {
+  const trimmed = location.replace(/\s+/g, ' ').trim()
+  return JUNK_VENUES.has(trimmed.toLowerCase()) ? 'Venue TBA' : trimmed
 }

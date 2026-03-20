@@ -64,7 +64,8 @@ export async function getEvents(params: {
     await setGeoCachedEvents(geoCell, radiusKm, deduped, category)
   }
 
-  return { events: filterByCity(deduped, city), geoCell, fromCache: false }
+  // Keyword searches skip city filter — user is looking for something specific
+  return { events: keyword ? deduped : filterByCity(deduped, city), geoCell, fromCache: false }
 }
 
 // ── Helpers ──────────────────────────────────────────────────────────────────

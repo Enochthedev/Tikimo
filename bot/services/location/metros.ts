@@ -1,23 +1,19 @@
 /**
- * Metro area groupings for Nigerian cities.
- * Used to match events without coordinates to the user's search area.
- * An event in "Ikeja" should match a user searching in "Lagos".
+ * Lightweight metro area matching.
+ * Used as a fast fallback when geocoded coords aren't available.
+ * The real source of truth is Geoapify geocoding (venueGeocoder.ts).
  */
 
 const METROS: string[][] = [
-  ['lagos', 'lekki', 'victoria island', 'ikeja', 'surulere', 'ikoyi', 'yaba', 'ajah', 'oshodi', 'ikotun', 'agege', 'epe', 'badagry', 'ikorodu', 'festac', 'apapa', 'mushin', 'ogba', 'maryland', 'ojota', 'ogudu', 'gbagada', 'berger', 'magodo', 'ketu', 'ojodu', 'oregun', 'omole', 'anthony', 'palmgrove', 'bariga', 'elegushi'],
-  ['abuja', 'wuse', 'garki', 'maitama', 'gwarinpa', 'kubwa', 'jabi', 'asokoro', 'lugbe', 'nyanya', 'karu'],
-  ['port harcourt', 'ph', 'rumuokoro', 'eleme', 'rumuola', 'trans amadi', 'dline', 'old gra'],
-  ['ibadan', 'bodija', 'challenge', 'mokola', 'dugbe', 'ojoo'],
-  ['enugu', 'independence layout', 'new haven', 'ogui', 'achara'],
-  ['kano', 'nassarawa', 'fagge', 'sabon gari'],
-  ['benin city', 'benin', 'uselu', 'ugbowo', 'sapele road'],
-  ['calabar', 'marian', 'watt'],
-  ['accra', 'east legon', 'osu', 'labone', 'airport residential', 'cantonments', 'madina', 'tema'],
-  ['nairobi', 'westlands', 'kilimani', 'karen', 'lavington', 'kileleshwa', 'hurlingham'],
+  ['lagos', 'lekki', 'ikeja', 'surulere', 'ikoyi', 'yaba', 'ajah', 'victoria island', 'festac', 'apapa', 'oshodi', 'epe', 'ikotun', 'badagry', 'ikorodu'],
+  ['abuja', 'wuse', 'garki', 'maitama', 'gwarinpa', 'kubwa', 'jabi', 'asokoro'],
+  ['port harcourt', 'rumuokoro', 'rumuola', 'trans amadi'],
+  ['ibadan', 'bodija', 'mokola', 'dugbe'],
+  ['accra', 'east legon', 'osu', 'labone', 'tema'],
+  ['nairobi', 'westlands', 'kilimani', 'karen'],
 ]
 
-/** Check whether an event's city belongs to the same metro as the user's search city. */
+/** Check whether two city strings belong to the same metro area. */
 export function isSameMetro(eventCity: string, searchCity: string): boolean {
   const ec = eventCity.toLowerCase().trim()
   const sc = searchCity.toLowerCase().trim()
