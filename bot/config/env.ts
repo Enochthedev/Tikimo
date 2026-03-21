@@ -53,6 +53,9 @@ const schema = z.object({
     .transform((v) => v === 'true'),
   HEATMAP_AUGMENTATION_THRESHOLD: z.coerce.number().default(100),
 
+  // Stats
+  STATS_API_KEY: z.string().default('tiximo-stats-dev'),
+
   // App
   APP_URL: z.string().url(),
   WEBHOOK_SECRET: z.string().min(1),

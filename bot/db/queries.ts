@@ -12,10 +12,16 @@ export async function findOrCreateUser(platform: Platform, platformUserId: strin
     .where(and(eq(users.platform, platform), eq(users.platformUserId, platformUserId)))
     .limit(1)
 
-  if (existing[0]) return rowToUser(existing[0])
+  if (existing[0]) {
+    // Touch lastActiveAt in background — non-blocking
+    db.update(users)
+      .set({ lastActiveAt: sql`now()` })
+      .where(eq(users.id, existing[0].id))
+      .catch(() => {})
+    return rowToUser(existing[0])
+  }
 
   const [created] = await db.insert(users).values({ platform, platformUserId }).returning()
-
   return rowToUser(created)
 }
 
@@ -104,6 +110,73 @@ export async function getHypeScores(
     ORDER BY "hypeScore" DESC
   `)
   return rows as unknown as Array<{ eventId: string; provider: string; hypeScore: number }>
+}
+
+// ─── Stats ───────────────────────────────────────────────────────────────────
+
+export async function getActiveUserStats(): Promise<{
+  totalUsers: number
+  dau: number
+  wau: number
+  mau: number
+  newToday: number
+  newThisWeek: number
+  topPlatforms: Array<{ platform: string; count: number }>
+  topCities: Array<{ geoCell: string; searches: number }>
+}> {
+  const [[totals], platforms, cities] = await Promise.all([
+    db.execute(sql`
+      SELECT
+        COUNT(*)::int AS "totalUsers",
+        COUNT(*) FILTER (WHERE last_active_at > now() - interval '1 day')::int AS "dau",
+        COUNT(*) FILTER (WHERE last_active_at > now() - interval '7 days')::int AS "wau",
+        COUNT(*) FILTER (WHERE last_active_at > now() - interval '30 days')::int AS "mau",
+        COUNT(*) FILTER (WHERE created_at > now() - interval '1 day')::int AS "newToday",
+        COUNT(*) FILTER (WHERE created_at > now() - interval '7 days')::int AS "newThisWeek"
+      FROM users
+    `),
+    db.execute(sql`
+      SELECT platform, COUNT(*)::int AS count
+      FROM users
+      WHERE last_active_at > now() - interval '30 days'
+      GROUP BY platform ORDER BY count DESC
+    `),
+    db.execute(sql`
+      SELECT geo_cell AS "geoCell", SUM(hit_count)::int AS searches
+      FROM geo_cache_log
+      GROUP BY geo_cell ORDER BY searches DESC LIMIT 10
+    `),
+  ])
+
+  return {
+    ...(totals as { totalUsers: number; dau: number; wau: number; mau: number; newToday: number; newThisWeek: number }),
+    topPlatforms: platforms as unknown as Array<{ platform: string; count: number }>,
+    topCities: cities as unknown as Array<{ geoCell: string; searches: number }>,
+  }
+}
+
+export async function getEventStats(): Promise<{
+  totalSearches: number
+  totalBookings: number
+  totalViewed: number
+  bookingsToday: number
+}> {
+  const [row] = await db.execute(sql`
+    SELECT
+      COUNT(*)::int AS "totalViewed",
+      COUNT(*) FILTER (WHERE action = 'booked')::int AS "totalBookings",
+      COUNT(*) FILTER (WHERE action = 'booked' AND created_at > now() - interval '1 day')::int AS "bookingsToday"
+    FROM event_interactions
+  `)
+
+  const [searchRow] = await db.execute(sql`
+    SELECT COUNT(*)::int AS "totalSearches" FROM geo_cache_log
+  `)
+
+  return {
+    totalSearches: (searchRow as { totalSearches: number }).totalSearches,
+    ...(row as { totalViewed: number; totalBookings: number; bookingsToday: number }),
+  }
 }
 
 // ─── Internal ────────────────────────────────────────────────────────────────

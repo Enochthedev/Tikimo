@@ -29,6 +29,7 @@ export const users = pgTable(
     lastGeoCell: varchar('last_geo_cell', { length: 20 }),
     flags: jsonb('flags').$type<Record<string, boolean>>().default({}),
     createdAt: timestamp('created_at', { withTimezone: true }).defaultNow(),
+    lastActiveAt: timestamp('last_active_at', { withTimezone: true }).defaultNow(),
   },
   (t) => [unique().on(t.platform, t.platformUserId)],
 )

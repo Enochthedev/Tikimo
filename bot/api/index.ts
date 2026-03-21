@@ -25,6 +25,7 @@ const landingHtml = landingFile
   : '<html><body><h1>Tiximo</h1><p>Landing page not built yet.</p></body></html>'
 import discordRouter from './routes/discord.js'
 import { handleMapWebSocket, mapRouter } from './routes/map.js'
+import statsRouter from './routes/stats.js'
 import telegramRouter from './routes/telegram.js'
 import whatsappRouter from './routes/whatsapp.js'
 import { telegramBot } from '../adapters/telegram/index.js'
@@ -51,6 +52,7 @@ app.route('/', telegramRouter)
 app.route('/', whatsappRouter)
 app.route('/', discordRouter)
 app.route('/', mapRouter)
+app.route('/', statsRouter)
 
 // ─── Landing page ────────────────────────────────────────────────────────────
 app.get('/', (c) => c.html(landingHtml))
